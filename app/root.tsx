@@ -15,6 +15,7 @@ import { createServerSupabase } from "./utils/supabase.server";
 import { User } from "@supabase/supabase-js";
 import { useEffect } from "react";
 import { useSupabase } from "./hooks/useSupabase";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const env = context.cloudflare.env;
@@ -75,6 +76,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+const queryClient = new QueryClient();
+
 export default function App() {
   const { session } = useLoaderData<typeof loader>();
   const supabase = useSupabase();
@@ -85,13 +88,14 @@ export default function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("session", session);
-      console.log("serverAccessToken", serverAccessToken);
       if (session?.access_token !== serverAccessToken) {
         // server and client are out of sync.
         // Remix recalls active loaders after actions complete
         revalidator.revalidate();
-        window.location.reload();
+        // if this is a logout, we need to reload the page
+        if (_event === "SIGNED_OUT") {
+          window.location.reload();
+        }
       }
     });
 
@@ -101,5 +105,9 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverAccessToken, supabase]);
 
-  return <Outlet />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Outlet />
+    </QueryClientProvider>
+  );
 }
