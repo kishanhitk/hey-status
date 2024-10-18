@@ -2,7 +2,7 @@ import type { MetaFunction } from "@remix-run/cloudflare";
 import { Link } from "@remix-run/react";
 import { Button } from "~/components/ui/button";
 import { useSupabase } from "~/hooks/useSupabase";
-import useUser from "~/hooks/useUser";
+import { useUser } from "~/hooks/useUser";
 
 export const meta: MetaFunction = () => {
   return [

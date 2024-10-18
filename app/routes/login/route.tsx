@@ -9,7 +9,7 @@ const LoginPage = () => {
     supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${currentDomain}/auth/callback`,
+        redirectTo: `${currentDomain}/auth/callback?next=/dashboard`,
       },
     });
   };
