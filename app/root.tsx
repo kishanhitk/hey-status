@@ -1,5 +1,6 @@
-import type { LinksFunction } from "@remix-run/cloudflare";
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/cloudflare";
 import {
+  json,
   Links,
   Meta,
   Outlet,
@@ -8,6 +9,29 @@ import {
 } from "@remix-run/react";
 
 import "./tailwind.css";
+import { createServerSupabase } from "./utils/supabase.server";
+
+export async function loader({ request, context }: LoaderFunctionArgs) {
+  const env = context.cloudflare.env;
+  const { supabase, headers } = createServerSupabase(request, env);
+
+  const { data } = await supabase.from("example_table").select("*");
+
+  console.log(data);
+
+  return json(
+    {
+      data,
+      env: {
+        SUPABASE_URL: env.VITE_SUPABASE_URL,
+        SUPABASE_ANON_KEY: env.VITE_SUPABASE_ANON_KEY,
+      },
+    },
+    {
+      headers,
+    }
+  );
+}
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
