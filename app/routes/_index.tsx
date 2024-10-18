@@ -1,6 +1,8 @@
 import type { MetaFunction } from "@remix-run/cloudflare";
 import { Link } from "@remix-run/react";
 import { Button } from "~/components/ui/button";
+import { useSupabase } from "~/hooks/useSupabase";
+import useUser from "~/hooks/useUser";
 
 export const meta: MetaFunction = () => {
   return [
@@ -10,12 +12,15 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
+  const { user } = useUser();
+  const supabase = useSupabase();
+
   return (
     <div className="flex h-screen items-center justify-center">
       <div className="flex flex-col items-center gap-16">
         <header className="flex flex-col items-center gap-9">
           <h1 className="leading text-2xl font-bold text-gray-800 dark:text-gray-100">
-            Welcome to <span className="sr-only">Remix</span>
+            Welcome {user?.email} to <span className="sr-only">Remix</span>
           </h1>
           <div className="h-[144px] w-[434px]">
             <img
@@ -52,7 +57,13 @@ export default function Index() {
         </nav>
       </div>
       <Button asChild>
-        <Link to="/login">Login</Link>
+        {user ? (
+          <Button onClick={async () => await supabase.auth.signOut()}>
+            Logout
+          </Button>
+        ) : (
+          <Link to="/login">Login</Link>
+        )}
       </Button>
     </div>
   );
