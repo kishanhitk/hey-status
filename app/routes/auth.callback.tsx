@@ -1,4 +1,4 @@
-import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { redirect, type LoaderFunctionArgs } from "@remix-run/cloudflare";
 import { createServerSupabase } from "~/utils/supabase.server";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
