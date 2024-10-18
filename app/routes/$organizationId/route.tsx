@@ -1,9 +1,12 @@
 import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, Link } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
-import { Progress } from "~/components/ui/progress";
+import {
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  ExternalLink,
+} from "lucide-react";
 
 type Service = {
   id: string;
@@ -116,141 +119,166 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
   });
 }
 
-function getStatusColor(status: Service["current_status"]) {
+function getStatusIcon(status: Service["current_status"]) {
   switch (status) {
     case "operational":
-      return "bg-green-500";
+      return <CheckCircle className="h-5 w-5 text-green-500" />;
     case "degraded_performance":
-      return "bg-yellow-500";
+      return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
     case "partial_outage":
-      return "bg-orange-500";
     case "major_outage":
-      return "bg-red-500";
-    default:
-      return "bg-gray-500";
+      return <XCircle className="h-5 w-5 text-red-500" />;
   }
 }
 
 function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleString();
+  return new Date(dateString).toLocaleString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
 }
 
 export default function PublicStatusPage() {
-  const { organization, services, activeIncidents, resolvedIncidents, uptime } =
+  const { organization, services, activeIncidents, resolvedIncidents } =
     useLoaderData<StatusPageData>();
 
   if (!organization) {
     return <div>Organization not found</div>;
   }
 
+  const allOperational = services.every(
+    (service) => service.current_status === "operational"
+  );
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8">{organization.name} Status</h1>
-
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Current Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {services.map((service) => (
-              <div
-                key={service.id}
-                className="flex items-center justify-between p-4 bg-white rounded-lg shadow"
-              >
-                <div>
-                  <h3 className="font-semibold">{service.name}</h3>
-                  <p className="text-sm text-gray-500">{service.description}</p>
-                </div>
-                <Badge
-                  className={`${getStatusColor(
-                    service.current_status
-                  )} text-white`}
-                >
-                  {service.current_status.replace("_", " ")}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {activeIncidents.length > 0 && (
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Active Incidents</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {activeIncidents.map((incident) => (
-              <div
-                key={incident.id}
-                className="mb-4 p-4 bg-white rounded-lg shadow"
-              >
-                <h3 className="font-semibold">{incident.title}</h3>
-                <p className="text-sm text-gray-500">
-                  Status: {incident.status}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Impact: {incident.impact}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Started: {formatDate(incident.created_at)}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Affected Services:{" "}
-                  {incident.services_incidents
-                    .map((si) => si.service.name)
-                    .join(", ")}
-                </p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Uptime (Last 30 Days)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {services.map((service) => (
-            <div key={service.id} className="mb-4">
-              <div className="flex justify-between mb-1">
-                <span>{service.name}</span>
-                <span>{(uptime[service.id] || 0).toFixed(2)}%</span>
-              </div>
-              <Progress value={uptime[service.id] || 0} className="w-full" />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Incidents</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {resolvedIncidents.map((incident) => (
-            <div
-              key={incident.id}
-              className="mb-4 p-4 bg-white rounded-lg shadow"
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <header className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <svg
+              className="h-8 w-8 text-blue-500"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <h3 className="font-semibold">{incident.title}</h3>
-              <p className="text-sm text-gray-500">Status: {incident.status}</p>
-              <p className="text-sm text-gray-500">Impact: {incident.impact}</p>
-              <p className="text-sm text-gray-500">
-                Resolved: {formatDate(incident.updated_at)}
-              </p>
-              <p className="text-sm text-gray-500">
-                Affected Services:{" "}
-                {incident.services_incidents
-                  .map((si) => si.service.name)
-                  .join(", ")}
-              </p>
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+            </svg>
+            <span className="ml-2 text-xl font-bold text-gray-900">
+              {organization.name} Status
+            </span>
+          </div>
+          <nav className="flex space-x-4">
+            <Link className="text-gray-500 hover:text-gray-900" to="#">
+              Home
+            </Link>
+            <Link className="text-gray-500 hover:text-gray-900" to="#">
+              History
+            </Link>
+          </nav>
+        </div>
+      </header>
+      <main className="flex-grow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white shadow rounded-lg p-6 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Current Status
+            </h2>
+            <div className="flex items-center">
+              {allOperational ? (
+                <CheckCircle className="h-8 w-8 text-green-500" />
+              ) : (
+                <AlertTriangle className="h-8 w-8 text-yellow-500" />
+              )}
+              <span className="ml-2 text-xl font-medium text-gray-900">
+                {allOperational
+                  ? "All systems operational"
+                  : "Some systems are experiencing issues"}
+              </span>
             </div>
-          ))}
-        </CardContent>
-      </Card>
+          </div>
+          <div className="bg-white shadow rounded-lg p-6 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Components
+            </h2>
+            <div className="space-y-4">
+              {services.map((service) => (
+                <div
+                  key={service.id}
+                  className="flex items-center justify-between border-b pb-2"
+                >
+                  <span className="text-lg text-gray-900">{service.name}</span>
+                  <div className="flex items-center">
+                    {getStatusIcon(service.current_status)}
+                    <span className="ml-2 text-sm capitalize">
+                      {service.current_status.replace("_", " ")}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Recent Incidents
+            </h2>
+            <div className="space-y-6">
+              {[...activeIncidents, ...resolvedIncidents]
+                .slice(0, 5)
+                .map((incident) => (
+                  <div key={incident.id}>
+                    <div className="flex items-center mb-2">
+                      {incident.status === "resolved" ? (
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                      )}
+                      <span className="ml-2 text-lg font-medium text-gray-900">
+                        {incident.title}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 mb-1">
+                      Status:{" "}
+                      {incident.status.charAt(0).toUpperCase() +
+                        incident.status.slice(1)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {incident.status === "resolved" ? "Resolved" : "Updated"}{" "}
+                      - {formatDate(incident.updated_at)}
+                    </p>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      </main>
+      <footer className="bg-white border-t">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+          <p className="text-gray-500">
+            © 2023 {organization.name}. All rights reserved.
+          </p>
+          <div className="flex space-x-4">
+            <Link
+              className="text-gray-500 hover:text-gray-900 flex items-center"
+              to="#"
+            >
+              Status RSS <ExternalLink className="ml-1 h-4 w-4" />
+            </Link>
+            <Link className="text-gray-500 hover:text-gray-900" to="#">
+              Privacy Policy
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
