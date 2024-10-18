@@ -21,7 +21,7 @@ import {
   DialogTrigger,
 } from "~/components/ui/dialog";
 import { toast } from "~/hooks/use-toast";
-import { IncidentForm } from "~/components/IncidentForm";
+import { IncidentForm } from "~/routes/dashboard.incidents/IncidentForm";
 import { useUser } from "~/hooks/useUser";
 
 type Incident = {

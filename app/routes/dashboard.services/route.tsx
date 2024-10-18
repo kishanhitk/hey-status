@@ -21,7 +21,7 @@ import {
   DialogTrigger,
 } from "~/components/ui/dialog";
 import { toast } from "~/hooks/use-toast";
-import { ServiceForm } from "~/components/ServiceForm";
+import { ServiceForm } from "~/routes/dashboard.services/ServiceForm";
 import { useUser } from "~/hooks/useUser";
 
 type Service = {
