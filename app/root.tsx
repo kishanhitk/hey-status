@@ -13,11 +13,10 @@ import { createServerSupabase } from "./utils/supabase.server";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const env = context.cloudflare.env;
+
   const { supabase, headers } = createServerSupabase(request, env);
 
   const { data } = await supabase.from("example_table").select("*");
-
-  console.log(data);
 
   return json(
     {

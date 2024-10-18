@@ -1,4 +1,5 @@
 import type { MetaFunction } from "@remix-run/cloudflare";
+import { Link } from "@remix-run/react";
 import { Button } from "~/components/ui/button";
 
 export const meta: MetaFunction = () => {
@@ -50,7 +51,9 @@ export default function Index() {
           </ul>
         </nav>
       </div>
-      <Button>Hello</Button>
+      <Button asChild>
+        <Link to="/login">Login</Link>
+      </Button>
     </div>
   );
 }
