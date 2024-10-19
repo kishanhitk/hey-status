@@ -7,8 +7,15 @@ import {
   XCircle,
   ExternalLink,
   Clock,
+  AlertCircle,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "~/components/ui/accordion";
 
 type Service = {
   id: string;
@@ -19,6 +26,19 @@ type Service = {
     | "degraded_performance"
     | "partial_outage"
     | "major_outage";
+};
+
+type IncidentStatus =
+  | "resolved"
+  | "investigating"
+  | "identified"
+  | "monitoring";
+
+const INCIDENT_STATUS_LABELS: Record<IncidentStatus, string> = {
+  resolved: "Resolved",
+  investigating: "Investigating",
+  identified: "Identified",
+  monitoring: "Monitoring",
 };
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
@@ -153,6 +173,17 @@ function formatDate(dateString: string) {
   });
 }
 
+function formatDateTime(dateString: string) {
+  return new Date(dateString).toLocaleString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+}
+
 export default function PublicStatusPage() {
   const {
     organization,
@@ -273,51 +304,71 @@ export default function PublicStatusPage() {
           )}
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Recent Incidents
+              Incident History
             </h2>
-            <div className="space-y-6">
-              {[...activeIncidents, ...resolvedIncidents]
-                .slice(0, 5)
-                .map((incident) => (
-                  <div key={incident.id}>
-                    <div className="flex items-center mb-2">
+            <Accordion type="single" collapsible className="space-y-4">
+              {[...activeIncidents, ...resolvedIncidents].map((incident) => (
+                <AccordionItem key={incident.id} value={incident.id}>
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center text-left">
                       {incident.incident_updates[0]?.status === "resolved" ? (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
                       ) : (
-                        <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                        <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2 flex-shrink-0" />
                       )}
-                      <span className="ml-2 text-lg font-medium text-gray-900">
-                        {incident.title}
-                      </span>
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {incident.title}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Current Status:{" "}
+                          {incident.incident_updates[0]?.status
+                            .charAt(0)
+                            .toUpperCase() +
+                            incident.incident_updates[0]?.status.slice(1)}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-gray-600 mb-1">
-                      Status:{" "}
-                      {incident.incident_updates[0]?.status
-                        .charAt(0)
-                        .toUpperCase() +
-                        incident.incident_updates[0]?.status.slice(1)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {incident.incident_updates[0]?.status === "resolved"
-                        ? "Resolved"
-                        : "Updated"}{" "}
-                      -{" "}
-                      {formatDistanceToNow(
-                        new Date(
-                          incident.incident_updates[0]?.created_at ||
-                            incident.created_at
-                        ),
-                        { addSuffix: true }
-                      )}
-                    </p>
-                    {incident.incident_updates[0]?.message && (
-                      <p className="text-sm text-gray-600 mt-2">
-                        {incident.incident_updates[0].message}
-                      </p>
-                    )}
-                  </div>
-                ))}
-            </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="mt-4 space-y-4">
+                      {incident.incident_updates
+                        .sort(
+                          (a, b) =>
+                            new Date(b.created_at).getTime() -
+                            new Date(a.created_at).getTime()
+                        )
+                        .map((update, index) => (
+                          <div
+                            key={update.id}
+                            className="border-l-2 border-gray-200 pl-4 ml-2"
+                          >
+                            <div className="flex items-center mb-2">
+                              {getStatusIcon(update.status as IncidentStatus)}
+                              <span className="ml-2 text-sm font-medium text-gray-900">
+                                {
+                                  INCIDENT_STATUS_LABELS[
+                                    update.status as IncidentStatus
+                                  ]
+                                }
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-1">
+                              {update.message}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {formatDateTime(update.created_at)}
+                            </p>
+                            {index !== incident.incident_updates.length - 1 && (
+                              <div className="h-4 border-l-2 border-gray-200 ml-2"></div>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         </div>
       </main>
