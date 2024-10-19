@@ -55,6 +55,14 @@ import {
   SERVICE_STATUS,
 } from "~/lib/contants";
 import { Checkbox } from "~/components/ui/checkbox";
+import {
+  MultiSelector,
+  MultiSelectorTrigger,
+  MultiSelectorInput,
+  MultiSelectorContent,
+  MultiSelectorList,
+  MultiSelectorItem,
+} from "~/components/ui/multi-select";
 
 export async function loader({ params, request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
@@ -329,40 +337,7 @@ export default function IncidentDetails() {
 
   return (
     <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Incident Details</h1>
-        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="destructive">Delete Incident</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                Are you sure you want to delete this incident?
-              </DialogTitle>
-              <DialogDescription>
-                This action cannot be undone. This will permanently delete the
-                incident and all associated updates.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={deleteIncidentMutation.isPending}
-              >
-                {deleteIncidentMutation.isPending ? "Deleting..." : "Delete"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+      <h1 className="text-3xl font-bold mb-8">Incident Details</h1>
 
       <div className="flex">
         <div className="w-full">
@@ -449,29 +424,33 @@ export default function IncidentDetails() {
                   <FormItem>
                     <FormLabel>Affected Services</FormLabel>
                     <FormControl>
-                      <Select
-                        onValueChange={(value) =>
-                          field.onChange([...field.value, value])
-                        }
-                        value={field.value[field.value.length - 1]}
+                      <MultiSelector
+                        onValuesChange={field.onChange}
+                        values={field.value}
+                        options={services.map((service) => ({
+                          value: service.id,
+                          label: service.name,
+                        }))}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select services" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {services.map((service) => (
-                            <SelectItem key={service.id} value={service.id}>
-                              {service.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        <MultiSelectorTrigger>
+                          <MultiSelectorInput placeholder="Select affected services" />
+                        </MultiSelectorTrigger>
+                        <MultiSelectorContent>
+                          <MultiSelectorList>
+                            {services.map((service) => (
+                              <MultiSelectorItem
+                                key={service.id}
+                                value={service.id}
+                              >
+                                {service.name}
+                              </MultiSelectorItem>
+                            ))}
+                          </MultiSelectorList>
+                        </MultiSelectorContent>
+                      </MultiSelector>
                     </FormControl>
                     <FormDescription>
-                      Selected services:{" "}
-                      {field.value
-                        .map((id) => services.find((s) => s.id === id)?.name)
-                        .join(", ")}
+                      Select the services affected by this incident.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -628,6 +607,62 @@ export default function IncidentDetails() {
               </Button>
             </form>
           </Form>
+
+          <Separator className="my-8" />
+
+          <Dialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-fit border-red-500 text-red-500 hover:bg-red-500 hover:text-white ml-auto"
+              >
+                Delete Incident
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  Are you sure you want to delete this incident?
+                </DialogTitle>
+                <DialogDescription>
+                  This action cannot be undone. This will permanently delete the
+                  incident and all associated updates.
+                  <br />
+                  <br />
+                  Please manually update the status of the following services if
+                  needed:
+                  <ul className="list-disc list-inside mt-2">
+                    {incidentData?.services_incidents.map((si) => {
+                      const service = services.find(
+                        (s) => s.id === si.service_id
+                      );
+                      return service ? (
+                        <li key={service.id}>{service.name}</li>
+                      ) : null;
+                    })}
+                  </ul>
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={deleteIncidentMutation.isPending}
+                >
+                  {deleteIncidentMutation.isPending ? "Deleting..." : "Delete"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
