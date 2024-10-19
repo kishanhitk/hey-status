@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
 import { useLoaderData, useParams } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
@@ -7,13 +6,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import { toast } from "~/hooks/use-toast";
 import { useUser } from "~/hooks/useUser";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
@@ -36,6 +28,9 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { Separator } from "~/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 export async function loader({ params, request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
@@ -82,9 +77,12 @@ export default function IncidentDetails() {
   const supabase = useSupabase();
   const queryClient = useQueryClient();
   const { user } = useUser();
-  const [isUpdating, setIsUpdating] = useState(false);
 
-  const { data: incidentData } = useQuery({
+  const {
+    data: incidentData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["incident", incidentId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -107,10 +105,11 @@ export default function IncidentDetails() {
   const incidentForm = useForm({
     resolver: zodResolver(incidentSchema),
     defaultValues: {
-      title: incidentData.title,
-      description: incidentData.description,
-      impact: incidentData.impact,
-      serviceIds: incidentData.services_incidents.map((si) => si.service_id),
+      title: incidentData?.title || "",
+      description: incidentData?.description || "",
+      impact: incidentData?.impact || "none",
+      serviceIds:
+        incidentData?.services_incidents?.map((si) => si.service_id) || [],
     },
   });
 
@@ -157,7 +156,6 @@ export default function IncidentDetails() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
       toast({ title: "Incident updated successfully" });
-      setIsUpdating(false);
     },
     onError: (error: Error) => {
       toast({
@@ -206,17 +204,32 @@ export default function IncidentDetails() {
     addUpdateMutation.mutate(values);
   };
 
-  const latestUpdate = incidentData?.incident_updates[0];
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>
+          Failed to load incident details. Please try again later.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
-    <div className="p-8">
+    <div className="p-8 ">
       <h1 className="text-3xl font-bold mb-8">Incident Details</h1>
 
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Incident Information</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="flex">
+        <div className="w-full">
           <Form {...incidentForm}>
             <form
               onSubmit={incidentForm.handleSubmit(handleIncidentSubmit)}
@@ -316,15 +329,30 @@ export default function IncidentDetails() {
               </Button>
             </form>
           </Form>
-        </CardContent>
-      </Card>
 
-      <h2 className="text-2xl font-bold mb-4">Status Updates</h2>
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Add Update</CardTitle>
-        </CardHeader>
-        <CardContent>
+          <Separator className="my-8" />
+
+          <h2 className="text-2xl font-bold mb-4">Status Updates</h2>
+
+          {incidentData?.incident_updates
+            .sort(
+              (a, b) =>
+                new Date(b.created_at).getTime() -
+                new Date(a.created_at).getTime()
+            )
+            .map((update) => (
+              <div key={update.id} className="mb-4 p-4 bg-gray-100 rounded-lg">
+                <h3 className="font-semibold">{update.status}</h3>
+                <p className="text-sm text-gray-500 mb-2">
+                  {formatDistanceToNow(new Date(update.created_at))} ago
+                </p>
+                <p>{update.message}</p>
+              </div>
+            ))}
+
+          <Separator className="my-8" />
+
+          <h2 className="text-2xl font-bold mb-4">Add Update</h2>
           <Form {...updateForm}>
             <form
               onSubmit={updateForm.handleSubmit(handleUpdateSubmit)}
@@ -376,25 +404,8 @@ export default function IncidentDetails() {
               </Button>
             </form>
           </Form>
-        </CardContent>
-      </Card>
-
-      {incidentData?.incident_updates
-        .sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        )
-        .map((update) => (
-          <Card key={update.id} className="mb-4">
-            <CardHeader>
-              <CardTitle>{update.status}</CardTitle>
-              <CardDescription>
-                {formatDistanceToNow(new Date(update.created_at))} ago
-              </CardDescription>
-            </CardHeader>
-            <CardContent>{update.message}</CardContent>
-          </Card>
-        ))}
+        </div>
+      </div>
     </div>
   );
 }
