@@ -92,12 +92,12 @@ export default function App() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.access_token !== serverAccessToken) {
         // server and client are out of sync.
-        // Remix recalls active loaders after actions complete
-        revalidator.revalidate();
-        // if this is a logout, we need to reload the page
         if (_event === "SIGNED_OUT") {
           window.location.reload();
         }
+        // Remix recalls active loaders after actions complete
+        revalidator.revalidate();
+        // if this is a logout, we need to reload the page
       }
     });
 
