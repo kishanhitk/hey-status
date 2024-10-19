@@ -47,7 +47,13 @@ import {
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import { Input } from "~/components/ui/input";
-import { INCIDENT_STATUS_LABELS, IncidentStatus } from "~/lib/contants";
+import {
+  INCIDENT_STATUS,
+  INCIDENT_STATUS_LABELS,
+  IncidentStatus,
+} from "~/lib/contants";
+import { Checkbox } from "~/components/ui/checkbox";
+import { IMPACT_LEVELS } from "~/lib/constants";
 
 export async function loader({ params, request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
@@ -86,7 +92,26 @@ const incidentSchema = z.object({
 const updateSchema = z.object({
   status: z.enum(["investigating", "identified", "monitoring", "resolved"]),
   message: z.string().min(1, "Message is required"),
+  updateServiceStatus: z.boolean().default(false),
 });
+
+// Add this function to determine the service status based on incident status and impact
+function getServiceStatus(incidentStatus: string, incidentImpact: string) {
+  if (incidentStatus === INCIDENT_STATUS.RESOLVED) {
+    return "operational";
+  }
+
+  switch (incidentImpact) {
+    case IMPACT_LEVELS.CRITICAL:
+      return "major_outage";
+    case IMPACT_LEVELS.MAJOR:
+      return "partial_outage";
+    case IMPACT_LEVELS.MINOR:
+      return "degraded_performance";
+    default:
+      return "operational";
+  }
+}
 
 export default function IncidentDetails() {
   const { incident, services } = useLoaderData<typeof loader>();
@@ -137,6 +162,7 @@ export default function IncidentDetails() {
     defaultValues: {
       status: "investigating",
       message: "",
+      updateServiceStatus: false,
     },
   });
 
@@ -199,6 +225,23 @@ export default function IncidentDetails() {
         .single();
 
       if (error) throw error;
+
+      if (values.updateServiceStatus) {
+        const newServiceStatus = getServiceStatus(
+          values.status,
+          incidentData.impact
+        );
+        const { error: serviceUpdateError } = await supabase
+          .from("services")
+          .update({ current_status: newServiceStatus })
+          .in(
+            "id",
+            incidentData.services_incidents.map((si) => si.service_id)
+          );
+
+        if (serviceUpdateError) throw serviceUpdateError;
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -543,6 +586,39 @@ export default function IncidentDetails() {
                       <Textarea {...field} placeholder="Enter update message" />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={updateForm.control}
+                name="updateServiceStatus"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Update status of affected services</FormLabel>
+                      <FormDescription>
+                        This will update the status of the following services to{" "}
+                        <strong>
+                          {getServiceStatus(
+                            updateForm.watch("status"),
+                            incidentData.impact
+                          )}
+                        </strong>
+                        :{" "}
+                        {incidentData.services_incidents
+                          .map(
+                            (si) =>
+                              services.find((s) => s.id === si.service_id)?.name
+                          )
+                          .join(", ")}
+                      </FormDescription>
+                    </div>
                   </FormItem>
                 )}
               />

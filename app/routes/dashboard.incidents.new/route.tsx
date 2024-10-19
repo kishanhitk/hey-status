@@ -29,6 +29,8 @@ import {
 } from "~/components/ui/multi-select";
 import { toast } from "~/hooks/use-toast";
 import { AlertCircle, AlertTriangle, Clock, CheckCircle } from "lucide-react";
+import { SERVICE_STATUS, IMPACT_LEVELS } from "~/lib/constants";
+import { Checkbox } from "~/components/ui/checkbox";
 import { INCIDENT_STATUS, INCIDENT_STATUS_LABELS } from "~/lib/contants";
 
 const formSchema = z.object({
@@ -42,7 +44,29 @@ const formSchema = z.object({
   serviceIds: z.array(z.string()).min(1, {
     message: "Please select at least one affected service.",
   }),
+  updateServiceStatus: z.boolean().default(false),
 });
+
+// Add this function to determine the service status based on incident status and impact
+function getServiceStatus(
+  incidentStatus: string,
+  incidentImpact: string
+): string {
+  if (incidentStatus === INCIDENT_STATUS.RESOLVED) {
+    return SERVICE_STATUS.OPERATIONAL;
+  }
+
+  switch (incidentImpact) {
+    case IMPACT_LEVELS.CRITICAL:
+      return SERVICE_STATUS.MAJOR_OUTAGE;
+    case IMPACT_LEVELS.MAJOR:
+      return SERVICE_STATUS.PARTIAL_OUTAGE;
+    case IMPACT_LEVELS.MINOR:
+      return SERVICE_STATUS.DEGRADED_PERFORMANCE;
+    default:
+      return SERVICE_STATUS.OPERATIONAL;
+  }
+}
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
@@ -72,6 +96,7 @@ export default function NewIncident() {
       statusMessage: "",
       impact: "none",
       serviceIds: [],
+      updateServiceStatus: false,
     },
   });
 
@@ -114,6 +139,16 @@ export default function NewIncident() {
         });
 
       if (updateError) throw updateError;
+
+      if (values.updateServiceStatus) {
+        const newServiceStatus = getServiceStatus(values.status, values.impact);
+        const { error: serviceUpdateError } = await supabase
+          .from("services")
+          .update({ current_status: newServiceStatus })
+          .in("id", values.serviceIds);
+
+        if (serviceUpdateError) throw serviceUpdateError;
+      }
 
       return incident;
     },
@@ -340,6 +375,33 @@ export default function NewIncident() {
                   Select the services affected by this incident.
                 </FormDescription>
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="updateServiceStatus"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>Update status of affected services</FormLabel>
+                  <FormDescription>
+                    This will update the status of the selected services to{" "}
+                    <strong>
+                      {getServiceStatus(
+                        form.watch("status"),
+                        form.watch("impact")
+                      )}
+                    </strong>
+                  </FormDescription>
+                </div>
               </FormItem>
             )}
           />
