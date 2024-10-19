@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   XCircle,
   ExternalLink,
+  Clock,
 } from "lucide-react";
 
 type Service = {
@@ -29,12 +30,22 @@ type Incident = {
   services_incidents: { service: Service }[];
 };
 
+type ScheduledMaintenance = {
+  id: string;
+  title: string;
+  status: "scheduled" | "in_progress" | "completed";
+  scheduled_start_time: string;
+  scheduled_end_time: string;
+  services_scheduled_maintenances: { service: Service }[];
+};
+
 type StatusPageData = {
   organization: { name: string; slug: string } | null;
   services: Service[];
   activeIncidents: Incident[];
   resolvedIncidents: Incident[];
   uptime: { [key: string]: number };
+  scheduledMaintenances: ScheduledMaintenance[];
 };
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
@@ -110,12 +121,26 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     return acc;
   }, {} as Record<string, number>);
 
+  // Fetch scheduled maintenances
+  const { data: scheduledMaintenances } = await supabase
+    .from("scheduled_maintenances")
+    .select(
+      `
+      *,
+      services_scheduled_maintenances(service:services(*))
+    `
+    )
+    .eq("organization_id", organization.id)
+    .gte("scheduled_end_time", new Date().toISOString())
+    .order("scheduled_start_time", { ascending: true });
+
   return json<StatusPageData>({
     organization,
     services: services || [],
     activeIncidents: activeIncidents || [],
     resolvedIncidents: resolvedIncidents || [],
     uptime: averageUptime,
+    scheduledMaintenances: scheduledMaintenances || [],
   });
 }
 
@@ -143,8 +168,13 @@ function formatDate(dateString: string) {
 }
 
 export default function PublicStatusPage() {
-  const { organization, services, activeIncidents, resolvedIncidents } =
-    useLoaderData<StatusPageData>();
+  const {
+    organization,
+    services,
+    activeIncidents,
+    resolvedIncidents,
+    scheduledMaintenances,
+  } = useLoaderData<StatusPageData>();
 
   if (!organization) {
     return <div>Organization not found</div>;
@@ -227,6 +257,34 @@ export default function PublicStatusPage() {
               ))}
             </div>
           </div>
+          {scheduledMaintenances.length > 0 && (
+            <div className="bg-white shadow rounded-lg p-6 mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                Scheduled Maintenance
+              </h2>
+              <div className="space-y-6">
+                {scheduledMaintenances.map((maintenance) => (
+                  <div key={maintenance.id}>
+                    <div className="flex items-center mb-2">
+                      <Clock className="h-5 w-5 text-blue-500" />
+                      <span className="ml-2 text-lg font-medium text-gray-900">
+                        {maintenance.title}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 mb-1">
+                      Status:{" "}
+                      {maintenance.status.charAt(0).toUpperCase() +
+                        maintenance.status.slice(1)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Scheduled: {formatDate(maintenance.scheduled_start_time)}{" "}
+                      - {formatDate(maintenance.scheduled_end_time)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
               Recent Incidents
