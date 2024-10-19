@@ -1,9 +1,8 @@
-import { useState } from "react";
 import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
 import { Link, useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import {
   Table,
@@ -13,32 +12,10 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
-import { toast } from "~/hooks/use-toast";
-import { IncidentForm } from "~/routes/dashboard.incidents/IncidentForm";
 import { useUser } from "~/hooks/useUser";
 import { formatDistanceToNow, format } from "date-fns";
 import { INCIDENT_IMPACT_LABELS, INCIDENT_STATUS_LABELS } from "~/lib/contants";
-
-type Incident = {
-  id: string;
-  title: string;
-  description: string;
-  status: "investigating" | "identified" | "monitoring" | "resolved";
-  impact: "none" | "minor" | "major" | "critical";
-  serviceIds: string[];
-};
-
-type Service = {
-  id: string;
-  name: string;
-};
+import { Loader2 } from "lucide-react";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
@@ -68,12 +45,8 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 export default function Incidents() {
   const { initialIncidents, services } = useLoaderData<typeof loader>();
   const supabase = useSupabase();
-  const queryClient = useQueryClient();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
-  const { user } = useUser();
 
-  const { data: incidents } = useQuery({
+  const { data: incidents, isLoading } = useQuery({
     queryKey: ["incidents"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -98,215 +71,103 @@ export default function Incidents() {
     initialData: initialIncidents,
   });
 
-  const createIncidentMutation = useMutation({
-    mutationFn: async (newIncident: Omit<Incident, "id">) => {
-      const { data, error } = await supabase
-        .from("incidents")
-        .insert({
-          title: newIncident.title,
-          description: newIncident.description,
-          status: newIncident.status,
-          impact: newIncident.impact,
-          organization_id: user?.profile?.organization_id,
-          created_by: user?.id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (newIncident.serviceIds && newIncident.serviceIds.length > 0) {
-        const { error: linkError } = await supabase
-          .from("services_incidents")
-          .insert(
-            newIncident.serviceIds.map((serviceId) => ({
-              incident_id: data.id,
-              service_id: serviceId,
-            }))
-          );
-
-        if (linkError) throw linkError;
-      }
-
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["incidents"] });
-      toast({ title: "Incident created successfully" });
-      setIsAddDialogOpen(false);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to create incident",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateIncidentMutation = useMutation({
-    mutationFn: async (updatedIncident: Incident) => {
-      const { data, error } = await supabase
-        .from("incidents")
-        .update({
-          title: updatedIncident.title,
-          description: updatedIncident.description,
-          status: updatedIncident.status,
-          impact: updatedIncident.impact,
-        })
-        .eq("id", updatedIncident.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Remove existing service links
-      await supabase
-        .from("services_incidents")
-        .delete()
-        .eq("incident_id", updatedIncident.id);
-
-      // Add new service links
-      if (updatedIncident.serviceIds && updatedIncident.serviceIds.length > 0) {
-        const { error: linkError } = await supabase
-          .from("services_incidents")
-          .insert(
-            updatedIncident.serviceIds.map((serviceId) => ({
-              incident_id: updatedIncident.id,
-              service_id: serviceId,
-            }))
-          );
-
-        if (linkError) throw linkError;
-      }
-
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["incidents"] });
-      toast({ title: "Incident updated successfully" });
-      setEditingIncident(null);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to update incident",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteIncidentMutation = useMutation({
-    mutationFn: async (id: string) => {
-      // Delete associated services_incidents records
-      await supabase.from("services_incidents").delete().eq("incident_id", id);
-
-      // Delete the incident
-      const { error } = await supabase.from("incidents").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["incidents"] });
-      toast({ title: "Incident deleted successfully" });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to delete incident",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSubmit = (data: Omit<Incident, "id">) => {
-    if (editingIncident) {
-      updateIncidentMutation.mutate({ ...data, id: editingIncident.id });
-    } else {
-      createIncidentMutation.mutate(data);
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Incidents</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Incidents</h1>
+          <p className="text-sm text-gray-500 mt-1 max-w-lg">
+            Manage and track all incidents affecting your services.
+          </p>
+        </div>
         <Button asChild>
           <Link to="/dashboard/incidents/new">Add New Incident</Link>
         </Button>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Current Status</TableHead>
-            <TableHead>Impact</TableHead>
-            <TableHead>Affected Services</TableHead>
-            <TableHead>Created On</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {incidents?.map((incident: any) => (
-            <TableRow key={incident.id}>
-              <TableCell>
-                <Link
-                  to={`/dashboard/incidents/${incident.id}`}
-                  className="underline"
-                  prefetch="intent"
-                >
-                  {incident.title}
-                </Link>
-              </TableCell>
-              <TableCell>
-                <div>
-                  {INCIDENT_STATUS_LABELS[incident.currentStatus]}
-                  <div className="text-sm text-gray-500">
-                    Last update:{" "}
-                    {incident.lastUpdateTime
-                      ? formatDistanceToNow(new Date(incident.lastUpdateTime), {
-                          addSuffix: true,
-                        })
-                      : "N/A"}
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>{INCIDENT_IMPACT_LABELS[incident.impact]}</TableCell>
-              <TableCell>
-                {incident.serviceIds
-                  .map(
-                    (serviceId) =>
-                      services.find((s) => s.id === serviceId)?.name
-                  )
-                  .join(", ")}
-              </TableCell>
-              <TableCell>
-                {incident.created_at
-                  ? format(new Date(incident.created_at), "MMM d, yyyy HH:mm")
-                  : "N/A"}
-              </TableCell>
+      {incidents && incidents.length > 0 ? (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Current Status</TableHead>
+              <TableHead>Impact</TableHead>
+              <TableHead>Affected Services</TableHead>
+              <TableHead>Created On</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      <Dialog
-        open={!!editingIncident}
-        onOpenChange={(open) => !open && setEditingIncident(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Incident</DialogTitle>
-          </DialogHeader>
-          {editingIncident && (
-            <IncidentForm
-              initialData={editingIncident}
-              onSubmit={handleSubmit}
-              isSubmitting={updateIncidentMutation.isPending}
-              services={services}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+          </TableHeader>
+          <TableBody>
+            {incidents.map((incident: any) => (
+              <TableRow key={incident.id}>
+                <TableCell>
+                  <Link
+                    to={`/dashboard/incidents/${incident.id}`}
+                    className="underline"
+                    prefetch="intent"
+                  >
+                    {incident.title}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <div>
+                    {INCIDENT_STATUS_LABELS[incident.currentStatus]}
+                    <div className="text-sm text-gray-500">
+                      Last update:{" "}
+                      {incident.lastUpdateTime
+                        ? formatDistanceToNow(
+                            new Date(incident.lastUpdateTime),
+                            {
+                              addSuffix: true,
+                            }
+                          )
+                        : "N/A"}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>{INCIDENT_IMPACT_LABELS[incident.impact]}</TableCell>
+                <TableCell>
+                  {incident.serviceIds
+                    .map(
+                      (serviceId) =>
+                        services.find((s) => s.id === serviceId)?.name
+                    )
+                    .join(", ")}
+                </TableCell>
+                <TableCell>
+                  {incident.created_at
+                    ? format(new Date(incident.created_at), "MMM d, yyyy HH:mm")
+                    : "N/A"}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      ) : (
+        <div className="text-center py-12 border border-dashed rounded-lg mx-auto w-full">
+          <h3 className="mt-2 text-lg font-semibold text-gray-900">
+            No incidents yet
+          </h3>
+          <div className="mt-3">
+            <Button asChild>
+              <Link to="/dashboard/incidents/new">Add New Incident</Link>
+            </Button>
+          </div>
+          <div className="mt-4 text-sm text-muted-foreground max-w-xs mx-auto">
+            <p>
+              Create incidents to track and communicate issues affecting your
+              services.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
