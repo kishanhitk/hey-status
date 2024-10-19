@@ -61,7 +61,11 @@ export default function Incidents() {
           incident_updates(id, status, created_at)
         `
         )
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .order("created_at", {
+          ascending: false,
+          referencedTable: "incident_updates",
+        });
       if (error) throw error;
       return data.map((incident) => ({
         ...incident,
