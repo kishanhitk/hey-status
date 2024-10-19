@@ -23,8 +23,8 @@ import {
 import { toast } from "~/hooks/use-toast";
 import { IncidentForm } from "~/routes/dashboard.incidents/IncidentForm";
 import { useUser } from "~/hooks/useUser";
-import { formatDistanceToNow } from "date-fns";
-import { INCIDENT_STATUS_LABELS } from "~/lib/contants";
+import { formatDistanceToNow, format } from "date-fns";
+import { INCIDENT_IMPACT_LABELS, INCIDENT_STATUS_LABELS } from "~/lib/contants";
 
 type Incident = {
   id: string;
@@ -229,7 +229,7 @@ export default function Incidents() {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Manage Incidents</h1>
+        <h1 className="text-3xl font-bold">Incidents</h1>
         <Button asChild>
           <Link to="/dashboard/incidents/new">Add New Incident</Link>
         </Button>
@@ -242,7 +242,7 @@ export default function Incidents() {
             <TableHead>Current Status</TableHead>
             <TableHead>Impact</TableHead>
             <TableHead>Affected Services</TableHead>
-            <TableHead>Last Update</TableHead>
+            <TableHead>Created On</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -258,9 +258,19 @@ export default function Incidents() {
                 </Link>
               </TableCell>
               <TableCell>
-                {INCIDENT_STATUS_LABELS[incident.currentStatus]}
+                <div>
+                  {INCIDENT_STATUS_LABELS[incident.currentStatus]}
+                  <div className="text-sm text-gray-500">
+                    Last update:{" "}
+                    {incident.lastUpdateTime
+                      ? formatDistanceToNow(new Date(incident.lastUpdateTime), {
+                          addSuffix: true,
+                        })
+                      : "N/A"}
+                  </div>
+                </div>
               </TableCell>
-              <TableCell>{incident.impact}</TableCell>
+              <TableCell>{INCIDENT_IMPACT_LABELS[incident.impact]}</TableCell>
               <TableCell>
                 {incident.serviceIds
                   .map(
@@ -270,11 +280,9 @@ export default function Incidents() {
                   .join(", ")}
               </TableCell>
               <TableCell>
-                {incident.lastUpdateTime
-                  ? formatDistanceToNow(new Date(incident.lastUpdateTime), {
-                      addSuffix: true,
-                    })
-                  : "No updates"}
+                {incident.created_at
+                  ? format(new Date(incident.created_at), "MMM d, yyyy HH:mm")
+                  : "N/A"}
               </TableCell>
             </TableRow>
           ))}
