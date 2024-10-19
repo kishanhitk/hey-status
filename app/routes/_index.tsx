@@ -3,8 +3,10 @@ import { Globe, Bell, ArrowRight } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { useUser } from "~/hooks/useUser";
 
 export default function Component() {
+  const { user } = useUser();
   return (
     <div className="flex flex-col min-h-screen ">
       <header className="px-4 lg:px-6 h-14 flex items-center container">
@@ -38,9 +40,15 @@ export default function Component() {
             Docs
           </Link>
         </nav>
-        <Button asChild className="ml-4" variant="outline">
-          <Link to="/dashboard">Dashboard</Link>
-        </Button>
+        {user ? (
+          <Button asChild className="ml-4" variant="outline">
+            <Link to="/dashboard">Dashboard</Link>
+          </Button>
+        ) : (
+          <Button asChild className="ml-4" variant="outline">
+            <Link to="/login">Login</Link>
+          </Button>
+        )}
       </header>
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
