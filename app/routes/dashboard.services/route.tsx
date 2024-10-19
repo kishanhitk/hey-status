@@ -27,6 +27,13 @@ import { ServiceForm } from "~/routes/dashboard.services/ServiceForm";
 import { useUser } from "~/hooks/useUser";
 import { Edit2Icon, ExternalLink, Trash2Icon } from "lucide-react";
 import { SERVICE_STATUS_LABELS } from "~/lib/contants";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 type Service = {
   id: string;
@@ -42,7 +49,10 @@ type Service = {
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
-  const { data: services, error } = await supabase.from("services").select("*");
+  const { data: services, error } = await supabase
+    .from("services")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   if (error) {
     throw new Error("Failed to fetch services");
@@ -50,6 +60,25 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
   return json({ initialServices: services });
 }
+
+const STATUS_COLORS = {
+  operational: {
+    dot: "bg-green-500",
+    text: "bg-green-100 text-green-800 hover:bg-green-200",
+  },
+  degraded_performance: {
+    dot: "bg-yellow-500",
+    text: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
+  },
+  partial_outage: {
+    dot: "bg-orange-500",
+    text: "bg-orange-100 text-orange-800 hover:bg-orange-200",
+  },
+  major_outage: {
+    dot: "bg-red-500",
+    text: "bg-red-100 text-red-800 hover:bg-red-200",
+  },
+};
 
 export default function Services() {
   const { initialServices } = useLoaderData<typeof loader>();
@@ -63,7 +92,10 @@ export default function Services() {
   const { data: services } = useQuery({
     queryKey: ["services"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("services").select("*");
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -98,7 +130,7 @@ export default function Services() {
   });
 
   const updateServiceMutation = useMutation({
-    mutationFn: async (updatedService: Service) => {
+    mutationFn: async (updatedService: Partial<Service> & { id: string }) => {
       const { data, error } = await supabase
         .from("services")
         .update(updatedService)
@@ -158,10 +190,22 @@ export default function Services() {
     }
   };
 
+  const handleStatusChange = (
+    serviceId: string,
+    newStatus: Service["current_status"]
+  ) => {
+    updateServiceMutation.mutate({ id: serviceId, current_status: newStatus });
+  };
+
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Manage Services</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Services</h1>
+          <p className="text-sm text-gray-500 mt-1 max-w-lg">
+            Services are the individual components of your stack.
+          </p>
+        </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>Add New Service</Button>
@@ -207,7 +251,50 @@ export default function Services() {
                 )}
               </TableCell>
               <TableCell>
-                {SERVICE_STATUS_LABELS[service.current_status]}
+                <div className="flex items-center">
+                  <Select
+                    value={service.current_status}
+                    onValueChange={(value) =>
+                      handleStatusChange(
+                        service.id,
+                        value as Service["current_status"]
+                      )
+                    }
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(SERVICE_STATUS_LABELS).map(
+                        ([value, label]) => (
+                          <SelectItem
+                            key={value}
+                            value={value}
+                            className={`${
+                              STATUS_COLORS[value as keyof typeof STATUS_COLORS]
+                                .text
+                            } rounded-md px-2 py-1 my-1`}
+                          >
+                            {label}
+                          </SelectItem>
+                        )
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <div className="relative ml-3">
+                    {" "}
+                    <div
+                      className={`w-3 h-3 rounded-full mr-2 ${
+                        STATUS_COLORS[service.current_status].dot
+                      } animate-ping absolute animate-all duration-[2000ms]`}
+                    ></div>
+                    <div
+                      className={`w-3 h-3 rounded-full mr-2 ${
+                        STATUS_COLORS[service.current_status].dot
+                      }`}
+                    ></div>
+                  </div>
+                </div>
               </TableCell>
               <TableCell>
                 <Button
