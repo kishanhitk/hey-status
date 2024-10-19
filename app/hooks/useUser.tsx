@@ -5,6 +5,7 @@ import { User } from "@supabase/supabase-js";
 type UserWithProfile = User & {
   profile: Database["public"]["Tables"]["users"]["Row"];
 };
+
 export function useUser() {
   const supabase = useSupabase();
   const [user, setUser] = useState<UserWithProfile | null>(null);
@@ -19,7 +20,7 @@ export function useUser() {
       if (authUser) {
         const { data, error } = await supabase
           .from("users")
-          .select("*, organization:organization_id(id, name)")
+          .select("*, organization:organization_id(id, name, slug)")
           .eq("id", authUser.id)
           .single();
 

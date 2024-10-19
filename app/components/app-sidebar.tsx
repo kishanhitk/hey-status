@@ -1,5 +1,13 @@
 import * as React from "react";
-import { BarChart2, Bell, Calendar, Home, Settings, Users } from "lucide-react";
+import {
+  BarChart2,
+  Bell,
+  Calendar,
+  ExternalLink,
+  Home,
+  Settings,
+  Users,
+} from "lucide-react";
 
 import {
   DropdownMenu,
@@ -22,6 +30,7 @@ import {
 } from "~/components/ui/sidebar";
 import { useUser } from "~/hooks/useUser";
 import { NavUser } from "./nav-user";
+import { Link } from "@remix-run/react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser();
@@ -110,6 +119,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenu>
           </SidebarGroup>
         ))}
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Public</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <a
+                  href={`/${user?.profile?.organization?.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full flex items-center"
+                >
+                  <span>Public Status Page</span>
+                  <ExternalLink className="ml-auto size-4" />
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
         {user ? (
