@@ -41,7 +41,7 @@ import {
 } from "~/components/ui/table";
 import { toast } from "~/hooks/use-toast";
 import { useState } from "react";
-import { ROLE_LABELS, Role } from "~/lib/contants";
+import { ROLE_LABELS, Role } from "~/lib/constants";
 
 type TeamMember = {
   id: string;

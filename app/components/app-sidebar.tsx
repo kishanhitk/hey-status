@@ -33,7 +33,7 @@ import {
 import { useUser } from "~/hooks/useUser";
 import { NavUser } from "./nav-user";
 import { Link } from "@remix-run/react";
-import { ROLES } from "~/lib/contants";
+import { ROLES } from "~/lib/constants";
 import RoleBasedAccess from "./role-based-access";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

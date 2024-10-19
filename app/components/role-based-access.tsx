@@ -2,7 +2,7 @@ import React from "react";
 
 import { useUser } from "~/hooks/useUser";
 
-import { Role } from "~/lib/contants";
+import { Role } from "~/lib/constants";
 
 interface RoleBasedAccessProps {
   allowedRoles: Role[];

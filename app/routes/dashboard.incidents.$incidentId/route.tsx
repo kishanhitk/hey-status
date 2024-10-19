@@ -53,7 +53,7 @@ import {
   INCIDENT_STATUS_LABELS,
   IncidentStatus,
   SERVICE_STATUS,
-} from "~/lib/contants";
+} from "~/lib/constants";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
   MultiSelector,

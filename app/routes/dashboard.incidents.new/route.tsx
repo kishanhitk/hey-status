@@ -36,7 +36,7 @@ import {
   INCIDENT_STATUS_LABELS,
   SERVICE_STATUS,
   SERVICE_STATUS_LABELS,
-} from "~/lib/contants";
+} from "~/lib/constants";
 
 const formSchema = z.object({
   title: z.string().min(2, {

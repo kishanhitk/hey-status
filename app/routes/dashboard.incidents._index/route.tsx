@@ -14,7 +14,10 @@ import {
 } from "~/components/ui/table";
 import { useUser } from "~/hooks/useUser";
 import { formatDistanceToNow, format } from "date-fns";
-import { INCIDENT_IMPACT_LABELS, INCIDENT_STATUS_LABELS } from "~/lib/contants";
+import {
+  INCIDENT_IMPACT_LABELS,
+  INCIDENT_STATUS_LABELS,
+} from "~/lib/constants";
 import { Loader2 } from "lucide-react";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {

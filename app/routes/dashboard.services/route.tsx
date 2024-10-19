@@ -26,7 +26,7 @@ import { toast } from "~/hooks/use-toast";
 import { ServiceForm } from "~/routes/dashboard.services/ServiceForm";
 import { useUser } from "~/hooks/useUser";
 import { Edit2Icon, ExternalLink, Trash2Icon } from "lucide-react";
-import { SERVICE_STATUS_LABELS } from "~/lib/contants";
+import { SERVICE_STATUS_LABELS } from "~/lib/constants";
 import {
   Select,
   SelectContent,
