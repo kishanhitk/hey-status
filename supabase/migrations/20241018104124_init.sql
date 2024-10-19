@@ -66,8 +66,8 @@ CREATE TABLE incident_updates (
 
 -- Services Incidents junction table
 CREATE TABLE services_incidents (
-  service_id UUID REFERENCES services(id),
-  incident_id UUID REFERENCES incidents(id),
+  service_id UUID REFERENCES services(id) ON DELETE CASCADE,
+  incident_id UUID REFERENCES incidents(id) ON DELETE CASCADE,
   PRIMARY KEY (service_id, incident_id)
 );
 
@@ -89,15 +89,15 @@ CREATE TABLE scheduled_maintenances (
 
 -- Services Scheduled Maintenances junction table
 CREATE TABLE services_scheduled_maintenances (
-  service_id UUID REFERENCES services(id),
-  scheduled_maintenance_id UUID REFERENCES scheduled_maintenances(id),
+  service_id UUID REFERENCES services(id) ON DELETE CASCADE,
+  scheduled_maintenance_id UUID REFERENCES scheduled_maintenances(id) ON DELETE CASCADE,
   PRIMARY KEY (service_id, scheduled_maintenance_id)
 );
 
 -- Service Status Logs table (for uptime calculation)
 CREATE TABLE service_status_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  service_id UUID NOT NULL REFERENCES services(id),
+  service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
   status TEXT NOT NULL CHECK (status IN ('operational', 'degraded_performance', 'partial_outage', 'major_outage')),
   started_at TIMESTAMP WITH TIME ZONE NOT NULL,
   ended_at TIMESTAMP WITH TIME ZONE
@@ -106,7 +106,7 @@ CREATE TABLE service_status_logs (
 -- Uptime Daily Logs table (for efficient uptime reporting)
 CREATE TABLE uptime_daily_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  service_id UUID NOT NULL REFERENCES services(id),
+  service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
   date DATE NOT NULL,
   uptime_percentage NUMERIC(5,2) NOT NULL,
   UNIQUE(service_id, date)
