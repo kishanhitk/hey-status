@@ -36,7 +36,8 @@ CREATE TABLE services (
   organization_id UUID NOT NULL REFERENCES organizations(id),
   current_status TEXT NOT NULL CHECK (current_status IN ('operational', 'degraded_performance', 'partial_outage', 'major_outage')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  url TEXT
 );
 
 -- Incidents table

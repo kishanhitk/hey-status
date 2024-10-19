@@ -26,6 +26,12 @@ const formSchema = z.object({
     message: "Service name must be at least 2 characters.",
   }),
   description: z.string().optional(),
+  url: z
+    .union([
+      z.string().url({ message: "Please enter a valid URL" }),
+      z.string().length(0),
+    ])
+    .optional(),
   current_status: z.enum(
     ["operational", "degraded_performance", "partial_outage", "major_outage"],
     {
@@ -53,6 +59,7 @@ export function ServiceForm({
     defaultValues: initialData || {
       name: "",
       description: "",
+      url: "",
       current_status: "operational",
     },
   });
@@ -87,6 +94,22 @@ export function ServiceForm({
               </FormControl>
               <FormDescription>
                 A brief description of your service (optional).
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>URL</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter service URL" {...field} />
+              </FormControl>
+              <FormDescription>
+                The URL of your service (optional).
               </FormDescription>
               <FormMessage />
             </FormItem>

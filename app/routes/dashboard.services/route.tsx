@@ -16,18 +16,23 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "~/components/ui/dialog";
 import { toast } from "~/hooks/use-toast";
 import { ServiceForm } from "~/routes/dashboard.services/ServiceForm";
 import { useUser } from "~/hooks/useUser";
+import { Edit2Icon, ExternalLink, Trash2Icon } from "lucide-react";
+import { SERVICE_STATUS_LABELS } from "~/lib/contants";
 
 type Service = {
   id: string;
   name: string;
   description: string;
+  url: string;
   current_status:
     | "operational"
     | "degraded_performance"
@@ -52,6 +57,7 @@ export default function Services() {
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [deletingService, setDeletingService] = useState<Service | null>(null);
   const { user } = useUser();
 
   const { data: services } = useQuery({
@@ -66,7 +72,6 @@ export default function Services() {
 
   const createServiceMutation = useMutation({
     mutationFn: async (newService: Omit<Service, "id">) => {
-      console.log("Adding service", newService);
       const { data, error } = await supabase
         .from("services")
         .insert({
@@ -75,10 +80,7 @@ export default function Services() {
         })
         .select()
         .single();
-      if (error) {
-        console.error(error);
-        throw error;
-      }
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
@@ -123,11 +125,15 @@ export default function Services() {
   const deleteServiceMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("services").delete().eq("id", id);
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting service:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
       toast({ title: "Service deleted successfully" });
+      setDeletingService(null);
     },
     onError: (error: Error) => {
       toast({
@@ -146,9 +152,9 @@ export default function Services() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this service?")) {
-      deleteServiceMutation.mutate(id);
+  const handleDelete = () => {
+    if (deletingService) {
+      deleteServiceMutation.mutate(deletingService.id);
     }
   };
 
@@ -177,6 +183,7 @@ export default function Services() {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Description</TableHead>
+            <TableHead>URL</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -186,23 +193,37 @@ export default function Services() {
             <TableRow key={service.id}>
               <TableCell>{service.name}</TableCell>
               <TableCell>{service.description}</TableCell>
-              <TableCell>{service.current_status}</TableCell>
+              <TableCell>
+                {service.url && (
+                  <a
+                    href={service.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline flex items-center"
+                  >
+                    {service.url}
+                    <ExternalLink className="w-4 h-4 inline-block ml-2" />
+                  </a>
+                )}
+              </TableCell>
+              <TableCell>
+                {SERVICE_STATUS_LABELS[service.current_status]}
+              </TableCell>
               <TableCell>
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="ghost"
+                  size="icon"
                   className="mr-2"
                   onClick={() => setEditingService(service)}
                 >
-                  Edit
+                  <Edit2Icon className="w-4 h-4" />
                 </Button>
                 <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(service.id)}
-                  disabled={deleteServiceMutation.isPending}
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDeletingService(service)}
                 >
-                  {deleteServiceMutation.isPending ? "Deleting..." : "Delete"}
+                  <Trash2Icon className="w-4 h-4" />
                 </Button>
               </TableCell>
             </TableRow>
@@ -225,6 +246,36 @@ export default function Services() {
               isSubmitting={updateServiceMutation.isPending}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!deletingService}
+        onOpenChange={(open) => !open && setDeletingService(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Service</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the service &quot;
+              <span className="font-bold text-black font-mono">
+                {deletingService?.name}
+              </span>
+              &quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletingService(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteServiceMutation.isPending}
+            >
+              {deleteServiceMutation.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

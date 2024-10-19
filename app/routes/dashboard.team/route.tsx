@@ -41,7 +41,7 @@ import {
 } from "~/components/ui/table";
 import { toast } from "~/hooks/use-toast";
 import { useState } from "react";
-import { ROLE_LABELS, ROLES } from "~/lib/contants";
+import { ROLE_LABELS, Role } from "~/lib/contants";
 
 type TeamMember = {
   id: string;
@@ -209,7 +209,7 @@ export default function Team() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {invitations.map((invitation) => (
+          {invitations?.map((invitation) => (
             <TableRow key={invitation.id}>
               <TableCell>{invitation.email}</TableCell>
               <TableCell>{invitation.role}</TableCell>
