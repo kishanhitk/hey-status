@@ -38,6 +38,13 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { Calendar } from "~/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 type Service = {
   id: string;
@@ -210,14 +217,16 @@ export default function NewMaintenance() {
               <FormItem>
                 <FormLabel>Status</FormLabel>
                 <FormControl>
-                  <select
-                    {...field}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="scheduled">Scheduled</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                  </select>
+                  <Select {...field}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="scheduled">Scheduled</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </FormControl>
                 <FormMessage />
               </FormItem>
