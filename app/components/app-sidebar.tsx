@@ -4,6 +4,7 @@ import {
   Bell,
   Calendar,
   ExternalLink,
+  Globe,
   Home,
   Settings,
   Users,
@@ -131,6 +132,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   rel="noreferrer"
                   className="w-full flex items-center"
                 >
+                  <Globe />
                   <span>Public Status Page</span>
                   <ExternalLink className="ml-auto size-4" />
                 </a>
