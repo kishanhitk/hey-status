@@ -264,6 +264,21 @@ export default function Services() {
               &quot;? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
+          <div className="my-4">
+            <p className="text-sm text-gray-500">Deleting this service will:</p>
+            <ul className="list-disc list-inside text-sm text-gray-500 mt-2">
+              <li>
+                Remove its association with any incidents (the incidents
+                themselves will remain)
+              </li>
+              <li>
+                Remove its association with any scheduled maintenances (the
+                maintenances themselves will remain)
+              </li>
+              <li>Delete all status logs for this service</li>
+              <li>Delete all uptime data for this service</li>
+            </ul>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeletingService(null)}>
               Cancel
