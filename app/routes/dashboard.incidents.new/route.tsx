@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
 import { useLoaderData, useNavigate } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
@@ -21,13 +20,6 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
-import {
   MultiSelector,
   MultiSelectorTrigger,
   MultiSelectorInput,
@@ -38,11 +30,6 @@ import {
 import { toast } from "~/hooks/use-toast";
 import { AlertCircle, AlertTriangle, Clock, CheckCircle } from "lucide-react";
 import { INCIDENT_STATUS, INCIDENT_STATUS_LABELS } from "~/lib/contants";
-
-type Service = {
-  id: string;
-  name: string;
-};
 
 const formSchema = z.object({
   title: z.string().min(2, {
