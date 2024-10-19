@@ -25,7 +25,7 @@ import {
 import { toast } from "~/hooks/use-toast";
 import { ServiceForm } from "~/routes/dashboard.services/ServiceForm";
 import { useUser } from "~/hooks/useUser";
-import { Edit2Icon, ExternalLink, Trash2Icon, PlusCircle } from "lucide-react";
+import { Edit2Icon, ExternalLink, Trash2Icon } from "lucide-react";
 import { SERVICE_STATUS_LABELS } from "~/lib/contants";
 import {
   Select,
@@ -222,19 +222,19 @@ export default function Services() {
         </Dialog>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>URL</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {services && services.length > 0 ? (
-            services.map((service: Service) => (
+      {services && services.length > 0 ? (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>URL</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {services.map((service: Service) => (
               <TableRow key={service.id}>
                 <TableCell>{service.name}</TableCell>
                 <TableCell>{service.description}</TableCell>
@@ -315,31 +315,27 @@ export default function Services() {
                   </Button>
                 </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={5} className="hover:bg-transparent">
-                <div className="text-center py-12 border border-dashed rounded-lg mx-auto w-full">
-                  <h3 className="mt-2 text-lg font-semibold text-gray-900">
-                    No services yet
-                  </h3>
-                  <div className="mt-3">
-                    <Button onClick={() => setIsAddDialogOpen(true)}>
-                      Add New Service
-                    </Button>
-                  </div>
-                  <div className="mt-4 text-sm text-muted-foreground max-w-xs mx-auto">
-                    <p>
-                      You can add services like your website, API, database,
-                      mobile app, etc.
-                    </p>
-                  </div>
-                </div>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            ))}
+          </TableBody>
+        </Table>
+      ) : (
+        <div className="text-center py-12 border border-dashed rounded-lg mx-auto w-full">
+          <h3 className="mt-2 text-lg font-semibold text-gray-900">
+            No services yet
+          </h3>
+          <div className="mt-3">
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              Add New Service
+            </Button>
+          </div>
+          <div className="mt-4 text-sm text-muted-foreground max-w-xs mx-auto">
+            <p>
+              You can add services like your website, API, database, mobile app,
+              etc.
+            </p>
+          </div>
+        </div>
+      )}
 
       <Dialog
         open={!!editingService}
