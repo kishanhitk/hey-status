@@ -23,6 +23,7 @@ import {
 import { toast } from "~/hooks/use-toast";
 import { IncidentForm } from "~/routes/dashboard.incidents/IncidentForm";
 import { useUser } from "~/hooks/useUser";
+import { formatDistanceToNow } from "date-fns";
 
 type Incident = {
   id: string;
@@ -89,6 +90,8 @@ export default function Incidents() {
         ...incident,
         serviceIds: incident.services_incidents.map((si) => si.service_id),
         currentStatus: incident.incident_updates[0]?.status || "No status",
+        lastUpdateTime:
+          incident.incident_updates[0]?.created_at || incident.created_at,
       }));
     },
     initialData: initialIncidents,
@@ -235,21 +238,6 @@ export default function Incidents() {
         <Button asChild>
           <Link to="/dashboard/incidents/new">Add New Incident</Link>
         </Button>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>Add New Incident</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Incident</DialogTitle>
-            </DialogHeader>
-            <IncidentForm
-              onSubmit={handleSubmit}
-              isSubmitting={createIncidentMutation.isPending}
-              services={services}
-            />
-          </DialogContent>
-        </Dialog>
       </div>
 
       <Table>
@@ -259,11 +247,11 @@ export default function Incidents() {
             <TableHead>Current Status</TableHead>
             <TableHead>Impact</TableHead>
             <TableHead>Affected Services</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>Last Update</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {incidents?.map((incident: Incident) => (
+          {incidents?.map((incident: any) => (
             <TableRow key={incident.id}>
               <TableCell>
                 <Link
@@ -284,17 +272,11 @@ export default function Incidents() {
                   .join(", ")}
               </TableCell>
               <TableCell>
-                <Button variant="outline" size="sm" className="mr-2" asChild>
-                  <Link to={`/dashboard/incidents/${incident.id}`}>View</Link>
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(incident.id)}
-                  disabled={deleteIncidentMutation.isPending}
-                >
-                  {deleteIncidentMutation.isPending ? "Deleting..." : "Delete"}
-                </Button>
+                {incident.lastUpdateTime
+                  ? formatDistanceToNow(new Date(incident.lastUpdateTime), {
+                      addSuffix: true,
+                    })
+                  : "No updates"}
               </TableCell>
             </TableRow>
           ))}

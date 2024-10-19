@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
-import { useLoaderData, useParams } from "@remix-run/react";
+import { useLoaderData, useParams, useNavigate } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,15 +8,15 @@ import { Button } from "~/components/ui/button";
 import { toast } from "~/hooks/use-toast";
 import { useUser } from "~/hooks/useUser";
 import { formatDistanceToNow } from "date-fns";
-import { Input } from "~/components/ui/input";
-import { Textarea } from "~/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -30,7 +31,22 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "~/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  Loader2,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+} from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { Textarea } from "~/components/ui/textarea";
+import { Input } from "~/components/ui/input";
 
 export async function loader({ params, request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
@@ -77,6 +93,8 @@ export default function IncidentDetails() {
   const supabase = useSupabase();
   const queryClient = useQueryClient();
   const { user } = useUser();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   const {
     data: incidentData,
@@ -196,6 +214,46 @@ export default function IncidentDetails() {
     },
   });
 
+  const deleteIncidentMutation = useMutation({
+    mutationFn: async () => {
+      // Delete associated services_incidents records
+      await supabase
+        .from("services_incidents")
+        .delete()
+        .eq("incident_id", incidentId);
+
+      // Delete associated incident_updates
+      await supabase
+        .from("incident_updates")
+        .delete()
+        .eq("incident_id", incidentId);
+
+      // Delete the incident
+      const { error } = await supabase
+        .from("incidents")
+        .delete()
+        .eq("id", incidentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["incidents"] });
+      toast({ title: "Incident deleted successfully" });
+      navigate("/dashboard/incidents");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete incident",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDelete = () => {
+    deleteIncidentMutation.mutate();
+    setIsDeleteDialogOpen(false);
+  };
+
   const handleIncidentSubmit = (values: z.infer<typeof incidentSchema>) => {
     updateIncidentMutation.mutate(values);
   };
@@ -225,8 +283,41 @@ export default function IncidentDetails() {
   }
 
   return (
-    <div className="p-8 ">
-      <h1 className="text-3xl font-bold mb-8">Incident Details</h1>
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Incident Details</h1>
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="destructive">Delete Incident</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                Are you sure you want to delete this incident?
+              </DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. This will permanently delete the
+                incident and all associated updates.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleteIncidentMutation.isPending}
+              >
+                {deleteIncidentMutation.isPending ? "Deleting..." : "Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <div className="flex">
         <div className="w-full">
@@ -267,22 +358,41 @@ export default function IncidentDetails() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Impact</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select impact" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        <SelectItem value="minor">Minor</SelectItem>
-                        <SelectItem value="major">Major</SelectItem>
-                        <SelectItem value="critical">Critical</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <div className="flex space-x-4">
+                        {[
+                          { value: "none", label: "None" },
+                          { value: "minor", label: "Minor" },
+                          { value: "major", label: "Major" },
+                          { value: "critical", label: "Critical" },
+                        ].map((impact) => (
+                          <label
+                            key={impact.value}
+                            className="flex items-center"
+                          >
+                            <input
+                              type="radio"
+                              {...field}
+                              value={impact.value}
+                              checked={field.value === impact.value}
+                              className="sr-only"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => field.onChange(impact.value)}
+                              className={`border-gray-300 text-gray-500 rounded-2xl px-7 ${
+                                field.value === impact.value
+                                  ? "border-black text-black"
+                                  : ""
+                              }`}
+                            >
+                              {impact.label}
+                            </Button>
+                          </label>
+                        ))}
+                      </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -364,24 +474,58 @@ export default function IncidentDetails() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="investigating">
-                          Investigating
-                        </SelectItem>
-                        <SelectItem value="identified">Identified</SelectItem>
-                        <SelectItem value="monitoring">Monitoring</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <div className="flex space-x-4">
+                        {[
+                          {
+                            value: "investigating",
+                            label: "Investigating",
+                            icon: AlertCircle,
+                          },
+                          {
+                            value: "identified",
+                            label: "Identified",
+                            icon: AlertTriangle,
+                          },
+                          {
+                            value: "monitoring",
+                            label: "Monitoring",
+                            icon: Clock,
+                          },
+                          {
+                            value: "resolved",
+                            label: "Resolved",
+                            icon: CheckCircle,
+                          },
+                        ].map((status) => (
+                          <label
+                            key={status.value}
+                            className="flex items-center"
+                          >
+                            <input
+                              type="radio"
+                              {...field}
+                              value={status.value}
+                              checked={field.value === status.value}
+                              className="sr-only"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => field.onChange(status.value)}
+                              className={`flex items-center space-x-2 border-gray-300 text-gray-500 ${
+                                field.value === status.value
+                                  ? "border-black text-black"
+                                  : ""
+                              }`}
+                            >
+                              <status.icon className="w-4 h-4" />
+                              <span>{status.label}</span>
+                            </Button>
+                          </label>
+                        ))}
+                      </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

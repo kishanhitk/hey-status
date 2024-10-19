@@ -4,7 +4,7 @@ import { useLoaderData, useNavigate } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
 import { useUser } from "~/hooks/useUser";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -21,6 +21,13 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import {
   MultiSelector,
   MultiSelectorTrigger,
   MultiSelectorInput,
@@ -28,8 +35,8 @@ import {
   MultiSelectorList,
   MultiSelectorItem,
 } from "~/components/ui/multi-select";
-import { AlertCircle, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { toast } from "~/hooks/use-toast";
+import { AlertCircle, AlertTriangle, Clock, CheckCircle } from "lucide-react";
 
 type Service = {
   id: string;
@@ -42,6 +49,7 @@ const formSchema = z.object({
   }),
   description: z.string().optional(),
   status: z.enum(["investigating", "identified", "monitoring", "resolved"]),
+  statusMessage: z.string().min(1, "Status message is required"),
   impact: z.enum(["none", "minor", "major", "critical"]),
   serviceIds: z.array(z.string()).min(1, {
     message: "Please select at least one affected service.",
@@ -62,7 +70,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 }
 
 export default function NewIncident() {
-  const { services: initialServices } = useLoaderData<typeof loader>();
+  const { services } = useLoaderData<typeof loader>();
   const supabase = useSupabase();
   const { user } = useUser();
   const navigate = useNavigate();
@@ -73,35 +81,19 @@ export default function NewIncident() {
       title: "",
       description: "",
       status: "investigating",
+      statusMessage: "",
       impact: "none",
       serviceIds: [],
     },
   });
 
-  const {
-    data: services,
-    isLoading: isLoadingServices,
-    error: servicesError,
-  } = useQuery({
-    queryKey: ["services"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("services")
-        .select("id, name");
-      if (error) throw error;
-      return data as Service[];
-    },
-    initialData: initialServices,
-  });
-
   const createIncidentMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const { data, error } = await supabase
+      const { data: incident, error: incidentError } = await supabase
         .from("incidents")
         .insert({
           title: values.title,
           description: values.description,
-          status: values.status,
           impact: values.impact,
           organization_id: user?.profile?.organization_id,
           created_by: user?.id,
@@ -109,14 +101,14 @@ export default function NewIncident() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (incidentError) throw incidentError;
 
       if (values.serviceIds.length > 0) {
         const { error: linkError } = await supabase
           .from("services_incidents")
           .insert(
             values.serviceIds.map((serviceId) => ({
-              incident_id: data.id,
+              incident_id: incident.id,
               service_id: serviceId,
             }))
           );
@@ -124,7 +116,18 @@ export default function NewIncident() {
         if (linkError) throw linkError;
       }
 
-      return data;
+      const { error: updateError } = await supabase
+        .from("incident_updates")
+        .insert({
+          incident_id: incident.id,
+          status: values.status,
+          message: values.statusMessage,
+          created_by: user?.id,
+        });
+
+      if (updateError) throw updateError;
+
+      return incident;
     },
     onSuccess: () => {
       toast({ title: "Incident created successfully" });
@@ -141,14 +144,6 @@ export default function NewIncident() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     createIncidentMutation.mutate(values);
-  }
-
-  if (isLoadingServices) {
-    return <div>Loading services...</div>;
-  }
-
-  if (servicesError) {
-    return <div>Error loading services: {servicesError.message}</div>;
   }
 
   return (
@@ -245,6 +240,27 @@ export default function NewIncident() {
                     ))}
                   </div>
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="statusMessage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status Message</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Enter status message"
+                    {...field}
+                    rows={2}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Provide details about the current status.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
