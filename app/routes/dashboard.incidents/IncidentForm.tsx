@@ -21,6 +21,14 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Checkbox } from "~/components/ui/checkbox";
+import {
+  MultiSelector,
+  MultiSelectorTrigger,
+  MultiSelectorInput,
+  MultiSelectorContent,
+  MultiSelectorList,
+  MultiSelectorItem,
+} from "~/components/ui/multi-select";
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -43,6 +51,11 @@ type Service = {
   name: string;
 };
 
+type ServiceOption = {
+  value: string;
+  label: string;
+};
+
 type IncidentFormProps = {
   initialData?: FormValues;
   onSubmit: (data: FormValues) => void;
@@ -56,6 +69,12 @@ export function IncidentForm({
   isSubmitting,
   services,
 }: IncidentFormProps) {
+  // Convert services to options
+  const serviceOptions: ServiceOption[] = services.map((service) => ({
+    value: service.id,
+    label: service.name,
+  }));
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
@@ -154,54 +173,36 @@ export function IncidentForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="serviceIds"
-          render={() => (
+          render={({ field }) => (
             <FormItem>
-              <div className="mb-4">
-                <FormLabel className="text-base">Affected Services</FormLabel>
-                <FormDescription>
-                  Select the services affected by this incident.
-                </FormDescription>
-              </div>
-              {services.map((service) => (
-                <FormField
-                  key={service.id}
-                  control={form.control}
-                  name="serviceIds"
-                  render={({ field }) => {
-                    return (
-                      <FormItem
-                        key={service.id}
-                        className="flex flex-row items-start space-x-3 space-y-0"
+              <FormLabel>Affected Services</FormLabel>
+              <MultiSelector
+                onValuesChange={(values) => field.onChange(values)}
+                values={field.value || []}
+                options={serviceOptions}
+              >
+                <MultiSelectorTrigger>
+                  <MultiSelectorInput placeholder="Select affected services" />
+                </MultiSelectorTrigger>
+                <MultiSelectorContent>
+                  <MultiSelectorList>
+                    {serviceOptions.map((option) => (
+                      <MultiSelectorItem
+                        key={option.value}
+                        value={option.value}
                       >
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value?.includes(service.id)}
-                            onCheckedChange={(checked) => {
-                              return checked
-                                ? field.onChange([
-                                    ...(field.value || []),
-                                    service.id,
-                                  ])
-                                : field.onChange(
-                                    field.value?.filter(
-                                      (value) => value !== service.id
-                                    )
-                                  );
-                            }}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">
-                          {service.name}
-                        </FormLabel>
-                      </FormItem>
-                    );
-                  }}
-                />
-              ))}
+                        {option.label}
+                      </MultiSelectorItem>
+                    ))}
+                  </MultiSelectorList>
+                </MultiSelectorContent>
+              </MultiSelector>
+              <FormDescription>
+                Select the services affected by this incident.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
