@@ -8,6 +8,7 @@ import {
   ExternalLink,
   Clock,
 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 type Service = {
   id: string;
@@ -18,34 +19,6 @@ type Service = {
     | "degraded_performance"
     | "partial_outage"
     | "major_outage";
-};
-
-type Incident = {
-  id: string;
-  title: string;
-  status: "investigating" | "identified" | "monitoring" | "resolved";
-  impact: "none" | "minor" | "major" | "critical";
-  created_at: string;
-  updated_at: string;
-  services_incidents: { service: Service }[];
-};
-
-type ScheduledMaintenance = {
-  id: string;
-  title: string;
-  status: "scheduled" | "in_progress" | "completed";
-  scheduled_start_time: string;
-  scheduled_end_time: string;
-  services_scheduled_maintenances: { service: Service }[];
-};
-
-type StatusPageData = {
-  organization: { name: string; slug: string } | null;
-  services: Service[];
-  activeIncidents: Incident[];
-  resolvedIncidents: Incident[];
-  uptime: { [key: string]: number };
-  scheduledMaintenances: ScheduledMaintenance[];
 };
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
@@ -70,18 +43,25 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     .eq("organization_id", organization.id);
 
   // Fetch active incidents
-  const { data: activeIncidents } = await supabase
+  const { data: activeIncidents, error: activeIncidentsError } = await supabase
     .from("incidents")
     .select(
       `
       *,
-      services_incidents(service:services(*))
+      services_incidents(service:services(*)),
+      incident_updates(id, status, message, created_at)
     `
     )
     .eq("organization_id", organization.id)
-    .neq("status", "resolved")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("created_at", {
+      ascending: false,
+      foreignTable: "incident_updates",
+    });
 
+  if (activeIncidentsError) {
+    console.error(activeIncidentsError);
+  }
   // Fetch resolved incidents (last 30 days)
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -90,13 +70,18 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     .select(
       `
       *,
-      services_incidents(service:services(*))
+      services_incidents(service:services(*)),
+      incident_updates(id, status, message, created_at)
     `
     )
     .eq("organization_id", organization.id)
     .eq("status", "resolved")
     .gte("created_at", thirtyDaysAgo.toISOString())
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("created_at", {
+      ascending: false,
+      foreignTable: "incident_updates",
+    });
 
   // Calculate uptime (last 30 days)
   const { data: uptimeLogs } = await supabase
@@ -134,7 +119,8 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     .gte("scheduled_end_time", new Date().toISOString())
     .order("scheduled_start_time", { ascending: true });
 
-  return json<StatusPageData>({
+  console.log({ activeIncidents });
+  return json({
     organization,
     services: services || [],
     activeIncidents: activeIncidents || [],
@@ -174,7 +160,7 @@ export default function PublicStatusPage() {
     activeIncidents,
     resolvedIncidents,
     scheduledMaintenances,
-  } = useLoaderData<StatusPageData>();
+  } = useLoaderData<typeof loader>();
 
   if (!organization) {
     return <div>Organization not found</div>;
@@ -295,7 +281,7 @@ export default function PublicStatusPage() {
                 .map((incident) => (
                   <div key={incident.id}>
                     <div className="flex items-center mb-2">
-                      {incident.status === "resolved" ? (
+                      {incident.incident_updates[0]?.status === "resolved" ? (
                         <CheckCircle className="h-5 w-5 text-green-500" />
                       ) : (
                         <AlertTriangle className="h-5 w-5 text-yellow-500" />
@@ -306,13 +292,29 @@ export default function PublicStatusPage() {
                     </div>
                     <p className="text-gray-600 mb-1">
                       Status:{" "}
-                      {incident.status.charAt(0).toUpperCase() +
-                        incident.status.slice(1)}
+                      {incident.incident_updates[0]?.status
+                        .charAt(0)
+                        .toUpperCase() +
+                        incident.incident_updates[0]?.status.slice(1)}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {incident.status === "resolved" ? "Resolved" : "Updated"}{" "}
-                      - {formatDate(incident.updated_at)}
+                      {incident.incident_updates[0]?.status === "resolved"
+                        ? "Resolved"
+                        : "Updated"}{" "}
+                      -{" "}
+                      {formatDistanceToNow(
+                        new Date(
+                          incident.incident_updates[0]?.created_at ||
+                            incident.created_at
+                        ),
+                        { addSuffix: true }
+                      )}
                     </p>
+                    {incident.incident_updates[0]?.message && (
+                      <p className="text-sm text-gray-600 mt-2">
+                        {incident.incident_updates[0].message}
+                      </p>
+                    )}
                   </div>
                 ))}
             </div>
