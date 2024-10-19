@@ -28,6 +28,16 @@ import {
   MultiSelectorItem,
 } from "~/components/ui/multi-select";
 import { toast } from "~/hooks/use-toast";
+import { TimePickerDemo } from "~/components/TimePickerDemo";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "~/lib/utils";
+import { Calendar } from "~/components/ui/calendar";
 
 type Service = {
   id: string;
@@ -40,8 +50,8 @@ const formSchema = z.object({
   }),
   description: z.string().optional(),
   status: z.enum(["scheduled", "in_progress", "completed"]),
-  scheduled_start_time: z.string(),
-  scheduled_end_time: z.string(),
+  scheduled_start_time: z.date(),
+  scheduled_end_time: z.date(),
   serviceIds: z.array(z.string()).min(1, {
     message: "Please select at least one affected service.",
   }),
@@ -72,8 +82,6 @@ export default function NewMaintenance() {
       title: "",
       description: "",
       status: "scheduled",
-      scheduled_start_time: "",
-      scheduled_end_time: "",
       serviceIds: [],
     },
   });
@@ -215,34 +223,96 @@ export default function NewMaintenance() {
               </FormItem>
             )}
           />
-
-          <FormField
-            control={form.control}
-            name="scheduled_start_time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Scheduled Start Time</FormLabel>
-                <FormControl>
-                  <Input type="datetime-local" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="scheduled_end_time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Scheduled End Time</FormLabel>
-                <FormControl>
-                  <Input type="datetime-local" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="flex gap-4">
+            <FormField
+              control={form.control}
+              name="scheduled_start_time"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel className="text-left">DateTime</FormLabel>
+                  <Popover>
+                    <FormControl>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[280px] justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? (
+                            format(field.value, "PPP HH:mm:ss")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                    </FormControl>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                      />
+                      <div className="p-3 border-t border-border">
+                        <TimePickerDemo
+                          setDate={field.onChange}
+                          date={field.value}
+                        />
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="scheduled_end_time"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel className="text-left">
+                    Scheduled End Time
+                  </FormLabel>
+                  <Popover>
+                    <FormControl>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[280px] justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? (
+                            format(field.value, "PPP HH:mm:ss")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                    </FormControl>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                      />
+                      <div className="p-3 border-t border-border">
+                        <TimePickerDemo
+                          setDate={field.onChange}
+                          date={field.value}
+                        />
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </FormItem>
+              )}
+            />
+          </div>
 
           <FormField
             control={form.control}
