@@ -1,85 +1,115 @@
 import * as React from "react";
 import { BarChart2, Bell, Calendar, Home, Settings, Users } from "lucide-react";
 
-import { NavMain } from "~/components/nav-main";
-import { NavUser } from "~/components/nav-user";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
 } from "~/components/ui/sidebar";
 import { useUser } from "~/hooks/useUser";
+import { NavUser } from "./nav-user";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser();
 
-  const navMain = [
+  const navGroups = [
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: Home,
+      label: "Overview",
       items: [
-        { title: "Overview", url: "/dashboard" },
-        { title: "Analytics", url: "/dashboard/analytics" },
+        { title: "Dashboard", url: "/dashboard", icon: Home },
+        { title: "Analytics", url: "/dashboard/analytics", icon: BarChart2 },
       ],
     },
     {
-      title: "Services",
-      url: "/dashboard/services",
-      icon: BarChart2,
-
+      label: "Management",
       items: [
-        { title: "All Services", url: "/dashboard/services" },
-        { title: "Add New Service", url: "/dashboard/services/new" },
+        { title: "Services", url: "/dashboard/services", icon: BarChart2 },
+        { title: "Incidents", url: "/dashboard/incidents", icon: Bell },
+        { title: "Maintenance", url: "/dashboard/maintenance", icon: Calendar },
       ],
     },
     {
-      title: "Incidents",
-      url: "/dashboard/incidents",
-      icon: Bell,
+      label: "Administration",
       items: [
-        { title: "Active Incidents", url: "/dashboard/incidents" },
-        { title: "Incident History", url: "/dashboard/incidents/history" },
-        { title: "Report Incident", url: "/dashboard/incidents/new" },
-      ],
-    },
-    {
-      title: "Maintenance",
-      url: "/dashboard/maintenance",
-      icon: Calendar,
-      items: [
-        { title: "Scheduled Maintenance", url: "/dashboard/maintenance" },
-        { title: "Schedule New", url: "/dashboard/maintenance/new" },
-      ],
-    },
-    {
-      title: "Team",
-      url: "/dashboard/team",
-      icon: Users,
-      items: [
-        { title: "Team Members", url: "/dashboard/team" },
-        { title: "Invite Member", url: "/dashboard/team/invite" },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "/dashboard/settings",
-      icon: Settings,
-      items: [
-        { title: "General", url: "/dashboard/settings" },
-        { title: "Notifications", url: "/dashboard/settings/notifications" },
-        { title: "API", url: "/dashboard/settings/api" },
+        { title: "Team", url: "/dashboard/team", icon: Users },
+        { title: "Settings", url: "/dashboard/settings", icon: Settings },
       ],
     },
   ];
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>Org</SidebarHeader>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                >
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                    {user?.profile?.organization?.name?.charAt(0) || "O"}
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">
+                      {user?.profile?.organization?.name || "Organization"}
+                    </span>
+                  </div>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                align="start"
+                side="bottom"
+                sideOffset={4}
+              >
+                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                  Organization
+                </DropdownMenuLabel>
+                <DropdownMenuItem className="gap-2 p-2">
+                  <div className="flex size-6 items-center justify-center rounded-sm border">
+                    {user?.profile?.organization_id?.charAt(0) || "O"}
+                  </div>
+                  {user?.profile?.organization_id || "Organization"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMain} />
+        {navGroups.map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarMenu>
+              {group.items.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <a href={item.url}>
+                      {item.icon && <item.icon className="mr-2 h-4 w-4" />}
+                      <span>{item.title}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
       <SidebarFooter>
         {user ? (

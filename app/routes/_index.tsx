@@ -38,7 +38,7 @@ export default function Component() {
             Docs
           </Link>
         </nav>
-        <Button className="ml-4" variant="outline">
+        <Button asChild className="ml-4" variant="outline">
           <Link to="/dashboard">Dashboard</Link>
         </Button>
       </header>

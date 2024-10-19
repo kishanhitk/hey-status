@@ -19,7 +19,7 @@ export function useUser() {
       if (authUser) {
         const { data, error } = await supabase
           .from("users")
-          .select("*")
+          .select("*, organization:organization_id(id, name)")
           .eq("id", authUser.id)
           .single();
 
