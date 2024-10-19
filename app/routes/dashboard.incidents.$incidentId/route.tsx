@@ -48,12 +48,13 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import { Input } from "~/components/ui/input";
 import {
+  INCIDENT_IMPACT,
   INCIDENT_STATUS,
   INCIDENT_STATUS_LABELS,
   IncidentStatus,
+  SERVICE_STATUS,
 } from "~/lib/contants";
 import { Checkbox } from "~/components/ui/checkbox";
-import { IMPACT_LEVELS } from "~/lib/constants";
 
 export async function loader({ params, request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
@@ -102,14 +103,14 @@ function getServiceStatus(incidentStatus: string, incidentImpact: string) {
   }
 
   switch (incidentImpact) {
-    case IMPACT_LEVELS.CRITICAL:
-      return "major_outage";
-    case IMPACT_LEVELS.MAJOR:
-      return "partial_outage";
-    case IMPACT_LEVELS.MINOR:
-      return "degraded_performance";
+    case INCIDENT_IMPACT.CRITICAL:
+      return SERVICE_STATUS.MAJOR_OUTAGE;
+    case INCIDENT_IMPACT.MAJOR:
+      return SERVICE_STATUS.PARTIAL_OUTAGE;
+    case INCIDENT_IMPACT.MINOR:
+      return SERVICE_STATUS.DEGRADED_PERFORMANCE;
     default:
-      return "operational";
+      return SERVICE_STATUS.OPERATIONAL;
   }
 }
 

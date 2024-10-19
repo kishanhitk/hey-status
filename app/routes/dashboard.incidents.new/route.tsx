@@ -29,9 +29,13 @@ import {
 } from "~/components/ui/multi-select";
 import { toast } from "~/hooks/use-toast";
 import { AlertCircle, AlertTriangle, Clock, CheckCircle } from "lucide-react";
-import { SERVICE_STATUS, IMPACT_LEVELS } from "~/lib/constants";
 import { Checkbox } from "~/components/ui/checkbox";
-import { INCIDENT_STATUS, INCIDENT_STATUS_LABELS } from "~/lib/contants";
+import {
+  INCIDENT_IMPACT,
+  INCIDENT_STATUS,
+  INCIDENT_STATUS_LABELS,
+  SERVICE_STATUS,
+} from "~/lib/contants";
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -57,11 +61,11 @@ function getServiceStatus(
   }
 
   switch (incidentImpact) {
-    case IMPACT_LEVELS.CRITICAL:
+    case INCIDENT_IMPACT.CRITICAL:
       return SERVICE_STATUS.MAJOR_OUTAGE;
-    case IMPACT_LEVELS.MAJOR:
+    case INCIDENT_IMPACT.MAJOR:
       return SERVICE_STATUS.PARTIAL_OUTAGE;
-    case IMPACT_LEVELS.MINOR:
+    case INCIDENT_IMPACT.MINOR:
       return SERVICE_STATUS.DEGRADED_PERFORMANCE;
     default:
       return SERVICE_STATUS.OPERATIONAL;
