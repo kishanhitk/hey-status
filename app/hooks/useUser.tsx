@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { useSupabase } from "./useSupabase";
 import { Database } from "~/types/supabase";
 import { User } from "@supabase/supabase-js";
+
 type UserWithProfile = User & {
-  profile: Database["public"]["Tables"]["users"]["Row"];
+  profile: Database["public"]["Tables"]["users"]["Row"] & {
+    organization: Database["public"]["Tables"]["organizations"]["Row"] | null;
+  };
 };
 
 export function useUser() {
@@ -20,7 +23,7 @@ export function useUser() {
       if (authUser) {
         const { data, error } = await supabase
           .from("users")
-          .select("*, organization:organization_id(id, name, slug)")
+          .select("*, organization:organizations!inner(*)")
           .eq("id", authUser.id)
           .single();
 
@@ -31,7 +34,10 @@ export function useUser() {
 
         setUser({
           ...authUser,
-          profile: data,
+          profile: {
+            ...data,
+            organization: data.organization || null,
+          },
         });
       }
       setLoading(false);
