@@ -1,21 +1,8 @@
 import * as React from "react";
-import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
-  SquareTerminal,
-} from "lucide-react";
+import { BarChart2, Bell, Calendar, Home, Settings, Users } from "lucide-react";
 
 import { NavMain } from "~/components/nav-main";
-import { NavProjects } from "~/components/nav-projects";
 import { NavUser } from "~/components/nav-user";
-import { TeamSwitcher } from "~/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
@@ -25,146 +12,74 @@ import {
 } from "~/components/ui/sidebar";
 import { useUser } from "~/hooks/useUser";
 
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useUser();
+
+  const navMain = [
     {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
-  navMain: [
-    {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: Home,
       items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
+        { title: "Overview", url: "/dashboard" },
+        { title: "Analytics", url: "/dashboard/analytics" },
       ],
     },
     {
-      title: "Models",
-      url: "#",
-      icon: Bot,
+      title: "Services",
+      url: "/dashboard/services",
+      icon: BarChart2,
+
       items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
+        { title: "All Services", url: "/dashboard/services" },
+        { title: "Add New Service", url: "/dashboard/services/new" },
       ],
     },
     {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
+      title: "Incidents",
+      url: "/dashboard/incidents",
+      icon: Bell,
       items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
+        { title: "Active Incidents", url: "/dashboard/incidents" },
+        { title: "Incident History", url: "/dashboard/incidents/history" },
+        { title: "Report Incident", url: "/dashboard/incidents/new" },
+      ],
+    },
+    {
+      title: "Maintenance",
+      url: "/dashboard/maintenance",
+      icon: Calendar,
+      items: [
+        { title: "Scheduled Maintenance", url: "/dashboard/maintenance" },
+        { title: "Schedule New", url: "/dashboard/maintenance/new" },
+      ],
+    },
+    {
+      title: "Team",
+      url: "/dashboard/team",
+      icon: Users,
+      items: [
+        { title: "Team Members", url: "/dashboard/team" },
+        { title: "Invite Member", url: "/dashboard/team/invite" },
       ],
     },
     {
       title: "Settings",
-      url: "#",
-      icon: Settings2,
+      url: "/dashboard/settings",
+      icon: Settings,
       items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
+        { title: "General", url: "/dashboard/settings" },
+        { title: "Notifications", url: "/dashboard/settings/notifications" },
+        { title: "API", url: "/dashboard/settings/api" },
       ],
     },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
-};
+  ];
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useUser();
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
-      </SidebarHeader>
+      <SidebarHeader>Org</SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
         {user ? (
