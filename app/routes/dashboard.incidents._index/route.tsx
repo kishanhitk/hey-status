@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
-import { useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -225,6 +225,9 @@ export default function Incidents() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Manage Incidents</h1>
+        <Button asChild>
+          <Link to="/dashboard/incidents/new">Add New Incident</Link>
+        </Button>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>Add New Incident</Button>
