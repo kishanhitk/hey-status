@@ -39,7 +39,7 @@ export default function Component() {
           </Link>
         </nav>
         <Button className="ml-4" variant="outline">
-          Dashboard
+          <Link to="/dashboard">Dashboard</Link>
         </Button>
       </header>
       <main className="flex-1">

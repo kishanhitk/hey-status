@@ -1,7 +1,5 @@
 import { LoaderFunctionArgs, json, redirect } from "@remix-run/cloudflare";
 import { Link, useLoaderData } from "@remix-run/react";
-import { User } from "@supabase/supabase-js";
-import { useUser } from "~/hooks/useUser";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { Button } from "~/components/ui/button";
 import {
@@ -12,8 +10,9 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Database } from "~/types/supabase";
+import { SidebarTrigger } from "~/components/ui/sidebar";
+import { Separator } from "~/components/ui/separator";
 
-type Service = Database["public"]["Tables"]["services"]["Row"];
 type Incident = Database["public"]["Tables"]["incidents"]["Row"];
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
@@ -21,9 +20,8 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, env);
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user as User;
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return redirect("/login");
@@ -56,15 +54,18 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
 const DashboardPage = () => {
   const { user, services, incidents } = useLoaderData<typeof loader>();
-  const { user: userProfile } = useUser();
 
   if (!user) return null;
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-8">
-        Welcome to your dashboard, {userProfile?.full_name}
-      </h1>
+    <div className="px-4">
+      <header className="flex h-16 shrink-0 items-center transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+        <div className="flex items-center gap-2 h-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="h-full" />
+          Dashboard
+        </div>
+      </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <Card>

@@ -12,7 +12,6 @@ import {
 
 import "./tailwind.css";
 import { createServerSupabase } from "./utils/supabase.server";
-import { User } from "@supabase/supabase-js";
 import { useEffect } from "react";
 import { useSupabase } from "./hooks/useSupabase";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -27,7 +26,10 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  const user = session?.user as User;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   return json(
     {
