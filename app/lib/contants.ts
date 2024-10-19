@@ -1,3 +1,5 @@
+import { AlertTriangle, AlertCircle, Clock, CheckCircle } from "lucide-react";
+
 export const ROLES = {
   ADMIN: "admin",
   EDITOR: "editor",
@@ -27,4 +29,59 @@ export const SERVICE_STATUS_LABELS = {
   [SERVICE_STATUS.DEGRADED_PERFORMANCE]: "Degraded Performance",
   [SERVICE_STATUS.PARTIAL_OUTAGE]: "Partial Outage",
   [SERVICE_STATUS.MAJOR_OUTAGE]: "Major Outage",
+};
+
+export const INCIDENT_STATUS = {
+  INVESTIGATING: "investigating",
+  IDENTIFIED: "identified",
+  MONITORING: "monitoring",
+  RESOLVED: "resolved",
+};
+
+export type IncidentStatus =
+  (typeof INCIDENT_STATUS)[keyof typeof INCIDENT_STATUS];
+
+export const INCIDENT_STATUS_LABELS = {
+  [INCIDENT_STATUS.INVESTIGATING]: "Investigating",
+  [INCIDENT_STATUS.IDENTIFIED]: "Identified",
+  [INCIDENT_STATUS.MONITORING]: "Monitoring",
+  [INCIDENT_STATUS.RESOLVED]: "Resolved",
+};
+
+export const INCIDENT_STATUS_ICONS = {
+  [INCIDENT_STATUS.INVESTIGATING]: AlertTriangle,
+  [INCIDENT_STATUS.IDENTIFIED]: AlertCircle,
+  [INCIDENT_STATUS.MONITORING]: Clock,
+  [INCIDENT_STATUS.RESOLVED]: CheckCircle,
+};
+
+export const INCIDENT_STATUS_COLORS = {
+  [INCIDENT_STATUS.INVESTIGATING]: "text-yellow-500",
+  [INCIDENT_STATUS.IDENTIFIED]: "text-red-500",
+  [INCIDENT_STATUS.MONITORING]: "text-blue-500",
+  [INCIDENT_STATUS.RESOLVED]: "text-green-500",
+};
+
+export const INCIDENT_STATUS_BACKGROUND_COLORS = {
+  [INCIDENT_STATUS.INVESTIGATING]: "bg-yellow-100",
+  [INCIDENT_STATUS.IDENTIFIED]: "bg-red-100",
+  [INCIDENT_STATUS.MONITORING]: "bg-blue-100",
+  [INCIDENT_STATUS.RESOLVED]: "bg-green-100",
+};
+
+export const INCIDENT_IMPACT = {
+  NONE: "none",
+  MINOR: "minor",
+  MAJOR: "major",
+  CRITICAL: "critical",
+};
+
+export type IncidentImpact =
+  (typeof INCIDENT_IMPACT)[keyof typeof INCIDENT_IMPACT];
+
+export const INCIDENT_IMPACT_LABELS = {
+  [INCIDENT_IMPACT.NONE]: "None",
+  [INCIDENT_IMPACT.MINOR]: "Minor",
+  [INCIDENT_IMPACT.MAJOR]: "Major",
+  [INCIDENT_IMPACT.CRITICAL]: "Critical",
 };

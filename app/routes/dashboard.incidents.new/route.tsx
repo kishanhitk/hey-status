@@ -37,6 +37,7 @@ import {
 } from "~/components/ui/multi-select";
 import { toast } from "~/hooks/use-toast";
 import { AlertCircle, AlertTriangle, Clock, CheckCircle } from "lucide-react";
+import { INCIDENT_STATUS, INCIDENT_STATUS_LABELS } from "~/lib/contants";
 
 type Service = {
   id: string;
@@ -199,19 +200,26 @@ export default function NewIncident() {
                   <div className="flex space-x-4">
                     {[
                       {
-                        value: "investigating",
-                        label: "Investigating",
+                        value: INCIDENT_STATUS.INVESTIGATING,
+                        label:
+                          INCIDENT_STATUS_LABELS[INCIDENT_STATUS.INVESTIGATING],
                         icon: AlertCircle,
                       },
                       {
-                        value: "identified",
-                        label: "Identified",
+                        value: INCIDENT_STATUS.IDENTIFIED,
+                        label:
+                          INCIDENT_STATUS_LABELS[INCIDENT_STATUS.IDENTIFIED],
                         icon: AlertTriangle,
                       },
-                      { value: "monitoring", label: "Monitoring", icon: Clock },
                       {
-                        value: "resolved",
-                        label: "Resolved",
+                        value: INCIDENT_STATUS.MONITORING,
+                        label:
+                          INCIDENT_STATUS_LABELS[INCIDENT_STATUS.MONITORING],
+                        icon: Clock,
+                      },
+                      {
+                        value: INCIDENT_STATUS.RESOLVED,
+                        label: INCIDENT_STATUS_LABELS[INCIDENT_STATUS.RESOLVED],
                         icon: CheckCircle,
                       },
                     ].map((status) => (

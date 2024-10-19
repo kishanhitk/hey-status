@@ -24,6 +24,7 @@ import { toast } from "~/hooks/use-toast";
 import { IncidentForm } from "~/routes/dashboard.incidents/IncidentForm";
 import { useUser } from "~/hooks/useUser";
 import { formatDistanceToNow } from "date-fns";
+import { INCIDENT_STATUS_LABELS } from "~/lib/contants";
 
 type Incident = {
   id: string;
@@ -225,12 +226,6 @@ export default function Incidents() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this incident?")) {
-      deleteIncidentMutation.mutate(id);
-    }
-  };
-
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
@@ -256,12 +251,15 @@ export default function Incidents() {
               <TableCell>
                 <Link
                   to={`/dashboard/incidents/${incident.id}`}
-                  className="text-blue-600 hover:underline"
+                  className="underline"
+                  prefetch="intent"
                 >
                   {incident.title}
                 </Link>
               </TableCell>
-              <TableCell>{incident.currentStatus}</TableCell>
+              <TableCell>
+                {INCIDENT_STATUS_LABELS[incident.currentStatus]}
+              </TableCell>
               <TableCell>{incident.impact}</TableCell>
               <TableCell>
                 {incident.serviceIds

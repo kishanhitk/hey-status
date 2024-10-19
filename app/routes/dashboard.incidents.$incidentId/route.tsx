@@ -47,6 +47,7 @@ import {
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import { Input } from "~/components/ui/input";
+import { INCIDENT_STATUS_LABELS, IncidentStatus } from "~/lib/contants";
 
 export async function loader({ params, request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
@@ -452,7 +453,9 @@ export default function IncidentDetails() {
             )
             .map((update) => (
               <div key={update.id} className="mb-4 p-4 bg-gray-100 rounded-lg">
-                <h3 className="font-semibold">{update.status}</h3>
+                <h3 className="font-semibold">
+                  {INCIDENT_STATUS_LABELS[update.status as IncidentStatus]}
+                </h3>
                 <p className="text-sm text-gray-500 mb-2">
                   {formatDistanceToNow(new Date(update.created_at))} ago
                 </p>
