@@ -38,6 +38,7 @@ const formSchema = z.object({
   status: z.enum(["investigating", "identified", "monitoring", "resolved"], {
     required_error: "Please select a status.",
   }),
+  statusMessage: z.string().optional(),
   impact: z.enum(["none", "minor", "major", "critical"], {
     required_error: "Please select an impact level.",
   }),
@@ -142,6 +143,25 @@ export function IncidentForm({
               </Select>
               <FormDescription>
                 The current status of the incident.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="statusMessage"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status Message (Optional)</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Enter a message for this status update"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Provide additional context for this status change.
               </FormDescription>
               <FormMessage />
             </FormItem>

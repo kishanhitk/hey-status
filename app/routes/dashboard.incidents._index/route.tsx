@@ -74,14 +74,21 @@ export default function Incidents() {
   const { data: incidents } = useQuery({
     queryKey: ["incidents"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("incidents").select(`
+      const { data, error } = await supabase
+        .from("incidents")
+        .select(
+          `
           *,
-          services_incidents(service_id)
-        `);
+          services_incidents(service_id),
+          incident_updates(id, status, created_at)
+        `
+        )
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data.map((incident) => ({
         ...incident,
         serviceIds: incident.services_incidents.map((si) => si.service_id),
+        currentStatus: incident.incident_updates[0]?.status || "No status",
       }));
     },
     initialData: initialIncidents,
@@ -249,7 +256,7 @@ export default function Incidents() {
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>Current Status</TableHead>
             <TableHead>Impact</TableHead>
             <TableHead>Affected Services</TableHead>
             <TableHead>Actions</TableHead>
@@ -258,8 +265,15 @@ export default function Incidents() {
         <TableBody>
           {incidents?.map((incident: Incident) => (
             <TableRow key={incident.id}>
-              <TableCell>{incident.title}</TableCell>
-              <TableCell>{incident.status}</TableCell>
+              <TableCell>
+                <Link
+                  to={`/dashboard/incidents/${incident.id}`}
+                  className="text-blue-600 hover:underline"
+                >
+                  {incident.title}
+                </Link>
+              </TableCell>
+              <TableCell>{incident.currentStatus}</TableCell>
               <TableCell>{incident.impact}</TableCell>
               <TableCell>
                 {incident.serviceIds
@@ -270,13 +284,8 @@ export default function Incidents() {
                   .join(", ")}
               </TableCell>
               <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mr-2"
-                  onClick={() => setEditingIncident(incident)}
-                >
-                  Edit
+                <Button variant="outline" size="sm" className="mr-2" asChild>
+                  <Link to={`/dashboard/incidents/${incident.id}`}>View</Link>
                 </Button>
                 <Button
                   variant="destructive"

@@ -6,6 +6,7 @@ import {
   ExternalLink,
   Globe,
   Home,
+  Server,
   Settings,
   Users,
 } from "lucide-react";
@@ -51,7 +52,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       allowedRoles: [ROLES.ADMIN, ROLES.EDITOR],
       label: "Management",
       items: [
-        { title: "Services", url: "/dashboard/services", icon: BarChart2 },
+        { title: "Services", url: "/dashboard/services", icon: Server },
         { title: "Incidents", url: "/dashboard/incidents", icon: Bell },
         { title: "Maintenance", url: "/dashboard/maintenance", icon: Calendar },
       ],
