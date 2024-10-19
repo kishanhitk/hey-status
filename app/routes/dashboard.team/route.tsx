@@ -41,6 +41,7 @@ import {
 } from "~/components/ui/table";
 import { toast } from "~/hooks/use-toast";
 import { useState } from "react";
+import { ROLE_LABELS, ROLES } from "~/lib/contants";
 
 type TeamMember = {
   id: string;
@@ -184,7 +185,11 @@ export default function Team() {
             <TableRow key={member.id}>
               <TableCell>{member.full_name}</TableCell>
               <TableCell>{member.email}</TableCell>
-              <TableCell>{member.role}</TableCell>
+              <TableCell>
+                <div className="text-white px-4 py-1 bg-black text-xs rounded-full text-center w-fit ">
+                  {ROLE_LABELS[member.role as Role]}
+                </div>
+              </TableCell>
               <TableCell>
                 {new Date(member.created_at).toLocaleDateString()}
               </TableCell>
