@@ -18,6 +18,8 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { toast } from "~/hooks/use-toast";
+import DotPattern from "~/components/ui/dot-pattern";
+import { cn } from "~/lib/utils";
 
 const acceptInvitationSchema = z.object({
   fullName: z
@@ -139,18 +141,34 @@ export default function AcceptInvitation() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+      <DotPattern
+        width={20}
+        height={20}
+        cx={5}
+        cy={5}
+        cr={1}
+        className={cn(
+          "[mask-image:radial-gradient(800px_circle_at_center,white,transparent)]"
+        )}
+      />
+      <div className="max-w-lg w-full space-y-8 bg-white/10 p-12 rounded-lg backdrop-blur-sm shadow-lg">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="text-center text-3xl font-bold text-gray-900 mb-4">
             Accept Invitation
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          {/* <p className="mt-2 text-center text-sm text-gray-600">
             You&apos;ve been invited to join {invitation.organizations.name} as
             a {invitation.role}.
           </p>
           <p className="mt-2 text-center text-sm text-gray-600">
             Invited by: {invitation.created_by.full_name} (
             {invitation.created_by.email})
+          </p> */}
+          <p className="mt-2 text-center text-sm text-gray-600">
+            <span className="font-bold">{invitation.created_by.full_name}</span>{" "}
+            has invited you to join{" "}
+            <span className="font-bold"> {invitation.organizations.name} </span>{" "}
+            as a <span className="font-bold"> {invitation.role}</span>
           </p>
         </div>
         {user ? (
