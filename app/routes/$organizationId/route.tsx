@@ -25,6 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { StatusHeatmap } from "./StatusHeatmap";
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { organizationId } = params;
@@ -226,6 +227,7 @@ export default function PublicStatusPage() {
               ))}
             </div>
           </div>
+          <StatusHeatmap services={services} />
           {scheduledMaintenances.length > 0 && (
             <div className="bg-white shadow rounded-lg p-6 mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">

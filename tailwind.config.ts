@@ -8,6 +8,9 @@ export default {
       container: {
         center: true,
       },
+      gridTemplateColumns: {
+        "31": "repeat(31, minmax(0, 1fr))",
+      },
       fontFamily: {
         sans: [
           "Inter",

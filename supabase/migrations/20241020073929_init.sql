@@ -180,16 +180,6 @@ CREATE TABLE IF NOT EXISTS "public"."scheduled_maintenances" (
 ALTER TABLE "public"."scheduled_maintenances" OWNER TO "postgres";
 
 
-CREATE TABLE IF NOT EXISTS "public"."service_status_logs" (
-    "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
-    "service_id" "uuid" NOT NULL,
-    "status" "text" NOT NULL,
-    "started_at" timestamp with time zone NOT NULL,
-    "ended_at" timestamp with time zone,
-    CONSTRAINT "service_status_logs_status_check" CHECK (("status" = ANY (ARRAY['operational'::"text", 'degraded_performance'::"text", 'partial_outage'::"text", 'major_outage'::"text"])))
-);
-
-
 ALTER TABLE "public"."service_status_logs" OWNER TO "postgres";
 
 
@@ -479,3 +469,35 @@ CREATE OR REPLACE TRIGGER "on_auth_user_created" AFTER INSERT ON "auth"."users" 
 
 
 
+
+-- Create a new table for service status logs
+CREATE TABLE IF NOT EXISTS "public"."service_status_logs" (
+    "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
+    "service_id" "uuid" NOT NULL,
+    "status" "text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "service_status_logs_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "service_status_logs_service_id_fkey" FOREIGN KEY ("service_id") REFERENCES "public"."services"("id") ON DELETE CASCADE,
+    CONSTRAINT "service_status_logs_status_check" CHECK (("status" = ANY (ARRAY['operational'::text, 'degraded_performance'::text, 'partial_outage'::text, 'major_outage'::text])))
+);
+
+-- Create an index on service_id and created_at for faster queries
+CREATE INDEX "idx_service_status_logs_service_id_created_at" ON "public"."service_status_logs" ("service_id", "created_at");
+
+-- Create a function to log service status changes
+CREATE OR REPLACE FUNCTION log_service_status_change()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF OLD.current_status IS NULL OR NEW.current_status <> OLD.current_status THEN
+        INSERT INTO public.service_status_logs (service_id, status)
+        VALUES (NEW.id, NEW.current_status);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create a trigger to call the function on service updates
+CREATE TRIGGER log_service_status_change_trigger
+AFTER INSERT OR UPDATE ON public.services
+FOR EACH ROW
+EXECUTE FUNCTION log_service_status_change();
