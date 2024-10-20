@@ -1,5 +1,9 @@
 import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
-import { useLoaderData } from "@remix-run/react";
+import {
+  useLoaderData,
+  useRouteError,
+  isRouteErrorResponse,
+} from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { CheckCircle, AlertTriangle, ExternalLink, Info } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -30,6 +34,7 @@ import {
 } from "~/components/ui/tooltip";
 import { StatusHeatmap } from "./StatusHeatmap";
 import { toast } from "~/hooks/use-toast";
+import { NotFound } from "~/components/NotFound";
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { organizationId } = params;
@@ -564,6 +569,24 @@ export default function PublicStatusPage() {
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error) && error.status === 404) {
+    return <NotFound />;
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <h1 className="text-4xl font-bold text-red-600 mb-4">Oops!</h1>
+      <p className="text-xl text-gray-700 mb-4">Something went wrong.</p>
+      <p className="text-gray-500">
+        Please try again later or contact support if the problem persists.
+      </p>
     </div>
   );
 }
