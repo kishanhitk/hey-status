@@ -14,7 +14,6 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 async function sendEmail(to: string[], subject: string, html: string) {
-  console.log(to, subject, html);
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -22,7 +21,7 @@ async function sendEmail(to: string[], subject: string, html: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Status Updates <updates@kishans.in>",
+      from: "Status Updates <notify@updates.kishans.in>",
       to,
       subject,
       html,
@@ -33,37 +32,27 @@ async function sendEmail(to: string[], subject: string, html: string) {
     throw new Error(`Failed to send email: ${response.statusText}`);
   }
 
-  console.log("Email sent successfully");
   return response.json();
 }
 
 Deno.serve(async (req) => {
   const data = await req.json();
-  console.log("data", data);
-  const { organizationId, incidentId, updateId } = data;
 
-  console.log("organizationId", organizationId);
-  console.log("incidentId", incidentId);
-  console.log("updateId", updateId);
-
-  // Fetch organization details
-  const { data: organization, error: orgError } = await supabase
-    .from("organizations")
-    .select("name")
-    .eq("id", organizationId)
-    .single();
-
-  if (orgError) {
-    return new Response(JSON.stringify({ error: "Organization not found" }), {
-      status: 404,
+  // Only handle inserts into incident_updates table
+  if (data.type !== "INSERT" || data.table !== "incident_updates") {
+    return new Response(JSON.stringify({ message: "Ignored" }), {
+      status: 200,
     });
   }
+
+  const { record } = data;
+  const { incident_id, status, message } = record;
 
   // Fetch incident details
   const { data: incident, error: incidentError } = await supabase
     .from("incidents")
-    .select("title, description")
-    .eq("id", incidentId)
+    .select("title, description, organization_id")
+    .eq("id", incident_id)
     .single();
 
   if (incidentError) {
@@ -72,28 +61,24 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Fetch update details if updateId is provided
-  let update = null;
-  if (updateId) {
-    const { data, error: updateError } = await supabase
-      .from("incident_updates")
-      .select("message, status")
-      .eq("id", updateId)
-      .single();
+  // Fetch organization details
+  const { data: organization, error: orgError } = await supabase
+    .from("organizations")
+    .select("name")
+    .eq("id", incident.organization_id)
+    .single();
 
-    if (updateError) {
-      return new Response(JSON.stringify({ error: "Update not found" }), {
-        status: 404,
-      });
-    }
-    update = data;
+  if (orgError) {
+    return new Response(JSON.stringify({ error: "Organization not found" }), {
+      status: 404,
+    });
   }
 
   // Fetch subscribers
   const { data: subscribers, error: subscribersError } = await supabase
     .from("subscribers")
     .select("email")
-    .eq("organization_id", organizationId);
+    .eq("organization_id", incident.organization_id);
 
   if (subscribersError) {
     return new Response(
@@ -104,23 +89,14 @@ Deno.serve(async (req) => {
 
   const to = subscribers.map((sub) => sub.email);
 
-  const subject = update
-    ? `Update: ${incident.title} - ${organization.name} Status`
-    : `New Incident: ${incident.title} - ${organization.name} Status`;
+  const subject = `Update: ${incident.title} - ${organization.name} Status`;
 
-  const html = update
-    ? `
-      <h1>Update: ${incident.title}</h1>
-      <p><strong>Status:</strong> ${update.status}</p>
-      <p>${update.message}</p>
-      <p>Visit our status page for more information.</p>
-    `
-    : `
-      <h1>New Incident: ${incident.title}</h1>
-      <p>${incident.description}</p>
-      <p>We are investigating this issue and will provide updates as they become available.</p>
-      <p>Visit our status page for more information.</p>
-    `;
+  const html = `
+    <h1>Update: ${incident.title}</h1>
+    <p><strong>Status:</strong> ${status}</p>
+    <p>${message}</p>
+    <p>Visit our status page for more information.</p>
+  `;
 
   try {
     await sendEmail(to, subject, html);
@@ -143,6 +119,6 @@ Deno.serve(async (req) => {
   curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/send-mail-to-subscribers' \
     --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
     --header 'Content-Type: application/json' \
-    --data '{"organizationId":"Functions","incidentId":"Functions","updateId":"Functions"}'
+    --data '{"type":"INSERT","table":"incident_updates","record":{"id":"6200d2d9-0140-4c05-94e5-c8814c948f6f","status":"investigating","message":"asd as ","created_at":"2024-10-20T14:29:54.32579+00:00","created_by":"4a6e50b3-994f-4107-922f-f04f1be712d5","incident_id":"249c64a1-3194-48d9-8683-5b23dcd334f2"},"schema":"public","old_record":null}'
 
 */
