@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, MetaFunction } from "@remix-run/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +18,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { toast } from "~/hooks/use-toast";
 import { metaGenerator } from "~/utils/metaGenerator";
+import { useDebounce } from "~/hooks/useDebounce";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -44,6 +45,7 @@ export const meta: MetaFunction = () => {
 
 export default function CreateOrganization() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
   const supabase = useSupabase();
   const { user } = useUser();
   const navigate = useNavigate();
@@ -56,11 +58,47 @@ export default function CreateOrganization() {
     },
   });
 
+  const slug = form.watch("slug");
+  const debouncedSlug = useDebounce(slug, 500);
+
+  useEffect(() => {
+    async function checkSlugAvailability() {
+      if (debouncedSlug.length < 2) {
+        setIsSlugAvailable(null);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("id")
+        .eq("slug", debouncedSlug)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error checking slug availability:", error);
+        return;
+      }
+
+      setIsSlugAvailable(data === null);
+    }
+
+    checkSlugAvailability();
+  }, [debouncedSlug, supabase]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
       toast({
         title: "Error",
         description: "You must be logged in to create an organization.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isSlugAvailable) {
+      toast({
+        title: "Error",
+        description: "The chosen slug is not available. Please choose another.",
         variant: "destructive",
       });
       return;
@@ -136,11 +174,22 @@ export default function CreateOrganization() {
                 <FormDescription>
                   This will be used in URLs and API requests.
                 </FormDescription>
+                {debouncedSlug.length >= 2 && (
+                  <p
+                    className={
+                      isSlugAvailable ? "text-green-600" : "text-red-600"
+                    }
+                  >
+                    {isSlugAvailable
+                      ? "✓ Slug is available"
+                      : "✗ Slug is not available"}
+                  </p>
+                )}
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading || !isSlugAvailable}>
             {isLoading ? "Creating..." : "Create Organization"}
           </Button>
         </form>
