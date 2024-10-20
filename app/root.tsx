@@ -15,6 +15,7 @@ import { createServerSupabase } from "./utils/supabase.server";
 import { useEffect } from "react";
 import { useSupabase } from "./hooks/useSupabase";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "~/components/ui/toaster";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const env = context.cloudflare.env;
@@ -104,6 +105,7 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster />
       <Outlet />
     </QueryClientProvider>
   );

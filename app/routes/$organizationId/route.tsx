@@ -19,7 +19,7 @@ import {
   ServiceStatus,
   SERVICE_STATUS_COLORS,
 } from "~/lib/constants";
-import { formatDateTime } from "~/utils/dateTime";
+import { formatDateTime, formatLocalDateTime } from "~/utils/dateTime";
 import {
   Tooltip,
   TooltipContent,
@@ -27,6 +27,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { StatusHeatmap } from "./StatusHeatmap";
+import { toast } from "~/hooks/use-toast";
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { organizationId } = params;
@@ -118,10 +119,20 @@ export default function PublicStatusPage() {
   const [scheduledMaintenances, setScheduledMaintenances] = useState(
     initialData.scheduledMaintenances
   );
+  const [lastUpdated, setLastUpdated] = useState(new Date());
   const supabase = useSupabase();
 
   // Enable Realtime updates
   useEffect(() => {
+    const updateLastUpdated = () => setLastUpdated(new Date());
+
+    const showUpdateToast = (message: string) => {
+      toast({
+        title: "Status Update",
+        description: message,
+      });
+    };
+
     const servicesSubscription = supabase
       .channel("public:services")
       .on(
@@ -138,11 +149,14 @@ export default function PublicStatusPage() {
                 ...updatedServices[index],
                 ...payload.new,
               };
+              showUpdateToast(`Service "${payload.new.name}" status updated.`);
             } else {
               updatedServices.push(payload.new as any);
+              showUpdateToast(`New service "${payload.new.name}" added.`);
             }
             return updatedServices;
           });
+          updateLastUpdated();
         }
       )
       .subscribe();
@@ -177,11 +191,16 @@ export default function PublicStatusPage() {
             );
             if (index !== -1) {
               updatedIncidents[index] = updatedIncident;
+              showUpdateToast(`Incident "${updatedIncident.title}" updated.`);
             } else {
               updatedIncidents.unshift(updatedIncident);
+              showUpdateToast(
+                `New incident "${updatedIncident.title}" reported.`
+              );
             }
             return updatedIncidents;
           });
+          updateLastUpdated();
         }
       )
       .subscribe();
@@ -210,10 +229,15 @@ export default function PublicStatusPage() {
           }
 
           setIncidents((currentIncidents) => {
-            return currentIncidents.map((incident) =>
+            const updatedIncidents = currentIncidents.map((incident) =>
               incident.id === updatedIncident.id ? updatedIncident : incident
             );
+            showUpdateToast(
+              `New update for incident "${updatedIncident.title}".`
+            );
+            return updatedIncidents;
           });
+          updateLastUpdated();
         }
       )
       .subscribe();
@@ -248,11 +272,18 @@ export default function PublicStatusPage() {
             );
             if (index !== -1) {
               updatedMaintenances[index] = updatedMaintenance;
+              showUpdateToast(
+                `Scheduled maintenance "${updatedMaintenance.title}" updated.`
+              );
             } else {
               updatedMaintenances.push(updatedMaintenance);
+              showUpdateToast(
+                `New scheduled maintenance "${updatedMaintenance.title}" added.`
+              );
             }
             return updatedMaintenances;
           });
+          updateLastUpdated();
         }
       )
       .subscribe();
@@ -263,7 +294,7 @@ export default function PublicStatusPage() {
       incidentUpdatesSubscription.unsubscribe();
       scheduledMaintenancesSubscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, toast]);
 
   const allOperational = services.every(
     (service) => service.current_status === "operational"
@@ -314,17 +345,22 @@ export default function PublicStatusPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
               Current Status
             </h2>
-            <div className="flex items-center">
-              {allOperational ? (
-                <CheckCircle className="h-8 w-8 text-green-500" />
-              ) : (
-                <AlertTriangle className="h-8 w-8 text-yellow-500" />
-              )}
-              <span className="ml-2 text-xl font-medium text-gray-900">
-                {allOperational
-                  ? "All systems operational"
-                  : "Some systems are experiencing issues"}
-              </span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                {allOperational ? (
+                  <CheckCircle className="h-8 w-8 text-green-500" />
+                ) : (
+                  <AlertTriangle className="h-8 w-8 text-yellow-500" />
+                )}
+                <span className="ml-2 text-xl font-medium text-gray-900">
+                  {allOperational
+                    ? "All systems operational"
+                    : "Some systems are experiencing issues"}
+                </span>
+              </div>
+              <div className="text-sm text-gray-500">
+                Last updated: {formatLocalDateTime(lastUpdated.toISOString())}
+              </div>
             </div>
           </div>
           <div className="bg-white shadow rounded-lg p-6 mb-8">
