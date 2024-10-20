@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
   // Fetch incident details
   const { data: incident, error: incidentError } = await supabase
     .from("incidents")
-    .select("title, description, organization_id")
+    .select("title, description, organization_id, created_at")
     .eq("id", incident_id)
     .single();
 
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
   // Fetch organization details
   const { data: organization, error: orgError } = await supabase
     .from("organizations")
-    .select("name")
+    .select("name,slug")
     .eq("id", incident.organization_id)
     .single();
 
@@ -89,13 +89,65 @@ Deno.serve(async (req) => {
 
   const to = subscribers.map((sub) => sub.email);
 
-  const subject = `Update: ${incident.title} - ${organization.name} Status`;
+  const statusColor =
+    {
+      investigating: "#FFA500", // Orange
+      identified: "#4B0082", // Indigo
+      monitoring: "#1E90FF", // Dodger Blue
+      resolved: "#008000", // Green
+    }[status] || "#000000"; // Default to black if status is not recognized
+
+  const subject = `${status.toUpperCase()}: ${incident.title} - ${
+    organization.name
+  } Status Update`;
 
   const html = `
-    <h1>Update: ${incident.title}</h1>
-    <p><strong>Status:</strong> ${status}</p>
-    <p>${message}</p>
-    <p>Visit our status page for more information.</p>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${subject}</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f4f4f4; padding: 10px; text-align: center; }
+        .content { padding: 20px 0; }
+        .footer { background-color: #f4f4f4; padding: 10px; text-align: center; font-size: 0.8em; }
+        .status { font-weight: bold; color: ${statusColor}; }
+        .button { display: inline-block; padding: 10px 20px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>${organization.name} Status Update</h1>
+        </div>
+        <div class="content">
+          <h2>${incident.title}</h2>
+          <p><strong>Status:</strong> <span class="status">${status.toUpperCase()}</span></p>
+          <p><strong>Updated:</strong> ${new Date().toUTCString()}</p>
+          <p><strong>Message:</strong> ${message}</p>
+          <h3>Incident Details:</h3>
+          <p><strong>Started:</strong> ${new Date(
+            incident.created_at
+          ).toUTCString()}</p>
+          <p><strong>Description:</strong> ${incident.description}</p>
+          <p>Our team is actively working on resolving this issue. We appreciate your patience and understanding.</p>
+          <p>
+            <a href="https://hey-status.pages.dev/${
+              organization.slug
+            }" class="button">View Status Page</a>
+          </p>
+        </div>
+        <div class="footer">
+          <p>You're receiving this email because you've subscribed to status updates for ${
+            organization.name
+          }.</p>
+        </div>
+      </div>
+    </body>
+    </html>
   `;
 
   try {
