@@ -44,6 +44,13 @@ export const SERVICE_STATUS_ICONS = {
   [SERVICE_STATUS.MAJOR_OUTAGE]: XCircle,
 };
 
+export const SERVICE_STATUS_COLORS = {
+  [SERVICE_STATUS.OPERATIONAL]: "text-green-500",
+  [SERVICE_STATUS.DEGRADED_PERFORMANCE]: "text-yellow-500",
+  [SERVICE_STATUS.PARTIAL_OUTAGE]: "text-orange-500",
+  [SERVICE_STATUS.MAJOR_OUTAGE]: "text-red-500",
+};
+
 export const INCIDENT_STATUS = {
   INVESTIGATING: "investigating",
   IDENTIFIED: "identified",

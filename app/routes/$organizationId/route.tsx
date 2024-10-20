@@ -1,7 +1,7 @@
 import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
-import { useLoaderData, Link } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
-import { CheckCircle, AlertTriangle, ExternalLink } from "lucide-react";
+import { CheckCircle, AlertTriangle, ExternalLink, Info } from "lucide-react";
 import React from "react";
 import {
   INCIDENT_STATUS_ICONS,
@@ -16,8 +16,15 @@ import {
   MAINTENANCE_STATUS_LABELS,
   MaintenanceStatus,
   ServiceStatus,
+  SERVICE_STATUS_COLORS,
 } from "~/lib/constants";
 import { formatDateTime } from "~/utils/dateTime";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { organizationId } = params;
@@ -146,14 +153,6 @@ export default function PublicStatusPage() {
               {organization.name} Status
             </span>
           </div>
-          <nav className="flex space-x-4">
-            <Link className="text-gray-500 hover:text-gray-900" to="#">
-              Home
-            </Link>
-            <Link className="text-gray-500 hover:text-gray-900" to="#">
-              History
-            </Link>
-          </nav>
         </div>
       </header>
       <main className="flex-grow">
@@ -176,24 +175,50 @@ export default function PublicStatusPage() {
             </div>
           </div>
           <div className="bg-white shadow rounded-lg p-6 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Components
-            </h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Services</h2>
             <div className="space-y-4">
-              {services.map((service) => (
+              {services.map((service, index) => (
                 <div
                   key={service.id}
-                  className="flex items-center justify-between border-b pb-2"
+                  className={`flex items-center justify-between ${
+                    index !== services.length - 1 ? "border-b pb-2" : ""
+                  }`}
                 >
-                  <span className="text-lg text-gray-900">{service.name}</span>
+                  <div className="flex items-center">
+                    <span className="text-lg text-gray-900">
+                      {service.name}
+                    </span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Info className="h-4 w-4 ml-2 text-gray-400" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{service.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <div className="flex items-center">
                     {React.createElement(
                       SERVICE_STATUS_ICONS[
                         service.current_status as ServiceStatus
                       ],
-                      { className: "h-5 w-5" }
+                      {
+                        className: `h-5 w-5 ${
+                          SERVICE_STATUS_COLORS[
+                            service.current_status as ServiceStatus
+                          ]
+                        }`,
+                      }
                     )}
-                    <span className="ml-2 text-sm capitalize">
+                    <span
+                      className={`ml-2 text-sm capitalize ${
+                        SERVICE_STATUS_COLORS[
+                          service.current_status as ServiceStatus
+                        ]
+                      }`}
+                    >
                       {service.current_status.replace("_", " ")}
                     </span>
                   </div>
@@ -265,8 +290,13 @@ export default function PublicStatusPage() {
               Incident History
             </h2>
             <div className="space-y-8">
-              {incidents.map((incident) => (
-                <div key={incident.id} className="border-b pb-6">
+              {incidents.map((incident, index) => (
+                <div
+                  key={incident.id}
+                  className={`${
+                    index !== incidents.length - 1 ? "border-b pb-6" : ""
+                  }`}
+                >
                   <h3
                     className={`text-xl font-semibold mb-2 ${
                       INCIDENT_STATUS_COLORS[
@@ -322,15 +352,14 @@ export default function PublicStatusPage() {
             © 2024 {organization.name}. All rights reserved.
           </p>
           <div className="flex space-x-4">
-            <Link
+            <a
               className="text-gray-500 hover:text-gray-900 flex items-center"
-              to="#"
+              href="https://hey-status.pages.dev"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              Status RSS <ExternalLink className="ml-1 h-4 w-4" />
-            </Link>
-            <Link className="text-gray-500 hover:text-gray-900" to="#">
-              Privacy Policy
-            </Link>
+              Powered by HeyStatus <ExternalLink className="ml-1 h-4 w-4" />
+            </a>
           </div>
         </div>
       </footer>
