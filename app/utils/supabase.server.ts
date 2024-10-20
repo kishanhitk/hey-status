@@ -4,11 +4,12 @@ import {
   serializeCookieHeader,
 } from "@supabase/ssr";
 import { Env } from "load-context";
+import { Database } from "~/types/supabase";
 
 export const createServerSupabase = (request: Request, env: Env) => {
   const headers = new Headers();
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     env.VITE_SUPABASE_URL!,
     env.VITE_SUPABASE_ANON_KEY!,
     {
