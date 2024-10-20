@@ -2,7 +2,7 @@ import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
 import { useLoaderData, Link } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { CheckCircle, AlertTriangle, ExternalLink } from "lucide-react";
-import { format, isBefore, isAfter } from "date-fns";
+import React from "react";
 import {
   getIncidentStatusIcon,
   getServiceStatusIcon,
@@ -10,8 +10,12 @@ import {
   IncidentStatus,
   MAINTENANCE_IMPACT_LABELS,
   MaintenanceImpact,
+  formatDateTime,
+  formatUTCDate,
+  getIncidentStatusColor,
+  getMaintenanceStatus,
+  getMaintenanceStatusColor,
 } from "~/lib/constants";
-import React from "react";
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { organizationId } = params;
@@ -38,40 +42,19 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     .select("*")
     .eq("organization_id", organization.id);
 
-  // Fetch active incidents
-  const { data: activeIncidents, error: activeIncidentsError } = await supabase
-    .from("incidents")
-    .select(
-      `
-      *,
-      services_incidents(service:services(*)),
-      incident_updates(id, status, message, created_at)
-    `
-    )
-    .eq("organization_id", organization.id)
-    .order("created_at", { ascending: false })
-    .order("created_at", {
-      ascending: false,
-      foreignTable: "incident_updates",
-    });
-
-  if (activeIncidentsError) {
-    console.error(activeIncidentsError);
-  }
-  // Fetch resolved incidents (last 30 days)
+  // Fetch active and resolved incidents (last 30 days)
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const { data: resolvedIncidents } = await supabase
+  const { data: incidents, error: incidentsError } = await supabase
     .from("incidents")
     .select(
       `
       *,
-      services_incidents(service:services(*)),
+      services_incidents(service:services(id, name)),
       incident_updates(id, status, message, created_at)
     `
     )
     .eq("organization_id", organization.id)
-    .eq("status", "resolved")
     .gte("created_at", thirtyDaysAgo.toISOString())
     .order("created_at", { ascending: false })
     .order("created_at", {
@@ -79,122 +62,46 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
       foreignTable: "incident_updates",
     });
 
-  // Calculate uptime (last 30 days)
-  const { data: uptimeLogs } = await supabase
-    .from("uptime_daily_logs")
-    .select("service_id, uptime_percentage")
-    .eq("organization_id", organization.id)
-    .gte("date", thirtyDaysAgo.toISOString());
+  if (incidentsError) {
+    console.error(incidentsError);
+    throw new Error("Failed to fetch incidents");
+  }
 
-  const uptime =
-    uptimeLogs?.reduce((acc, log) => {
-      if (!acc[log.service_id]) {
-        acc[log.service_id] = [];
-      }
-      acc[log.service_id].push(log.uptime_percentage);
-      return acc;
-    }, {} as Record<string, number[]>) || {};
-
-  const averageUptime = Object.keys(uptime).reduce((acc, serviceId) => {
-    acc[serviceId] =
-      uptime[serviceId].reduce((sum, val) => sum + val, 0) /
-      uptime[serviceId].length;
-    return acc;
-  }, {} as Record<string, number>);
-
-  // Update the scheduled maintenances fetch
-  const { data: scheduledMaintenances } = await supabase
-    .from("scheduled_maintenances")
-    .select(
-      `
+  // Fetch scheduled maintenances
+  const { data: scheduledMaintenances, error: maintenancesError } =
+    await supabase
+      .from("scheduled_maintenances")
+      .select(
+        `
       *,
-      services_scheduled_maintenances(services(*)),
+      services_scheduled_maintenances(services(id, name)),
       maintenance_updates(*)
     `
-    )
-    .eq("organization_id", organization.id)
-    .gte("end_time", new Date().toISOString())
-    .order("start_time", { ascending: true });
+      )
+      .eq("organization_id", organization.id)
+      .gte("end_time", new Date().toISOString())
+      .order("start_time", { ascending: true })
+      .order("created_at", {
+        ascending: false,
+        foreignTable: "maintenance_updates",
+      });
+
+  if (maintenancesError) {
+    console.error(maintenancesError);
+    throw new Error("Failed to fetch scheduled maintenances");
+  }
 
   return json({
     organization,
     services: services || [],
-    activeIncidents: activeIncidents || [],
-    resolvedIncidents: resolvedIncidents || [],
-    uptime: averageUptime,
+    incidents: incidents || [],
     scheduledMaintenances: scheduledMaintenances || [],
   });
 }
 
-function formatDateTime(dateString: string) {
-  return new Date(dateString).toLocaleString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
-}
-
-function formatUTCDate(dateString: string) {
-  return format(new Date(dateString), "MMM d, HH:mm 'UTC'");
-}
-
-function getIncidentStatusColor(status: IncidentStatus): string {
-  switch (status) {
-    case "resolved":
-      return "text-green-600";
-    case "investigating":
-      return "text-red-600";
-    case "identified":
-      return "text-orange-600";
-    case "monitoring":
-      return "text-blue-600";
-    default:
-      return "text-gray-600";
-  }
-}
-
-function getMaintenanceStatus(maintenance: any) {
-  const now = new Date();
-  const startTime = new Date(maintenance.start_time);
-  const endTime = new Date(maintenance.end_time);
-
-  if (isBefore(now, startTime)) {
-    return "Scheduled";
-  } else if (isAfter(now, startTime) && isBefore(now, endTime)) {
-    return "In Progress";
-  } else {
-    return "Completed";
-  }
-}
-
-function getMaintenanceStatusColor(status: string): string {
-  switch (status) {
-    case "Scheduled":
-      return "text-blue-600";
-    case "In Progress":
-      return "text-orange-600";
-    case "Completed":
-      return "text-green-600";
-    default:
-      return "text-gray-600";
-  }
-}
-
 export default function PublicStatusPage() {
-  const {
-    organization,
-    services,
-    activeIncidents,
-    resolvedIncidents,
-    scheduledMaintenances,
-  } = useLoaderData<typeof loader>();
-
-  if (!organization) {
-    return <div>Organization not found</div>;
-  }
+  const { organization, services, incidents, scheduledMaintenances } =
+    useLoaderData<typeof loader>();
 
   const allOperational = services.every(
     (service) => service.current_status === "operational"
@@ -265,7 +172,8 @@ export default function PublicStatusPage() {
                   <span className="text-lg text-gray-900">{service.name}</span>
                   <div className="flex items-center">
                     {React.createElement(
-                      getServiceStatusIcon(service.current_status)
+                      getServiceStatusIcon(service.current_status),
+                      { className: "h-5 w-5" }
                     )}
                     <span className="ml-2 text-sm capitalize">
                       {service.current_status.replace("_", " ")}
@@ -309,25 +217,19 @@ export default function PublicStatusPage() {
                         <p className="text-gray-600">
                           Affected Services:{" "}
                           {maintenance.services_scheduled_maintenances
-                            .map((ssm: any) => ssm.services.name)
+                            .map((ssm) => ssm.services.name)
                             .join(", ")}
                         </p>
                       </div>
                       <div className="space-y-4">
-                        {maintenance.maintenance_updates
-                          .sort(
-                            (a: any, b: any) =>
-                              new Date(b.created_at).getTime() -
-                              new Date(a.created_at).getTime()
-                          )
-                          .map((update: any) => (
-                            <div key={update.id}>
-                              <div className="text-sm text-gray-500">
-                                {formatUTCDate(update.created_at)}
-                              </div>
-                              <p className="text-gray-700">{update.message}</p>
+                        {maintenance.maintenance_updates.map((update) => (
+                          <div key={update.id}>
+                            <div className="text-sm text-gray-500">
+                              {formatUTCDate(update.created_at)}
                             </div>
-                          ))}
+                            <p className="text-gray-700">{update.message}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   );
@@ -340,7 +242,7 @@ export default function PublicStatusPage() {
               Incident History
             </h2>
             <div className="space-y-8">
-              {[...activeIncidents, ...resolvedIncidents].map((incident) => (
+              {incidents.map((incident) => (
                 <div key={incident.id} className="border-b pb-6">
                   <h3
                     className={`text-xl font-semibold mb-2 ${getIncidentStatusColor(
@@ -354,39 +256,34 @@ export default function PublicStatusPage() {
                     <p className="text-gray-600">
                       Affected Services:{" "}
                       {incident.services_incidents
-                        .map((si: any) => si.service.name)
+                        .map((si) => si.service.name)
                         .join(", ")}
                     </p>
                   </div>
                   <div className="space-y-4">
-                    {incident.incident_updates
-                      .sort(
-                        (a, b) =>
-                          new Date(b.created_at).getTime() -
-                          new Date(a.created_at).getTime()
-                      )
-                      .map((update) => (
-                        <div key={update.id}>
-                          <div className="flex items-center">
-                            {React.createElement(
-                              getIncidentStatusIcon(
+                    {incident.incident_updates.map((update) => (
+                      <div key={update.id}>
+                        <div className="flex items-center">
+                          {React.createElement(
+                            getIncidentStatusIcon(
+                              update.status as IncidentStatus
+                            ),
+                            { className: "h-5 w-5 mr-2" }
+                          )}
+                          <span className="font-semibold">
+                            {
+                              INCIDENT_STATUS_LABELS[
                                 update.status as IncidentStatus
-                              )
-                            )}
-                            <span className="font-semibold">
-                              {
-                                INCIDENT_STATUS_LABELS[
-                                  update.status as IncidentStatus
-                                ]
-                              }
-                            </span>
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {formatUTCDate(update.created_at)}
-                          </div>
-                          <p className="text-gray-700">{update.message}</p>
+                              ]
+                            }
+                          </span>
                         </div>
-                      ))}
+                        <div className="text-sm text-gray-500">
+                          {formatUTCDate(update.created_at)}
+                        </div>
+                        <p className="text-gray-700">{update.message}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}

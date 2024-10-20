@@ -5,6 +5,7 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
+import { format, isBefore, isAfter } from "date-fns";
 
 export const ROLES = {
   ADMIN: "admin",
@@ -137,3 +138,60 @@ export type MaintenanceStatus =
   (typeof MAINTENANCE_STATUS)[keyof typeof MAINTENANCE_STATUS];
 export type MaintenanceImpact =
   (typeof MAINTENANCE_IMPACT)[keyof typeof MAINTENANCE_IMPACT];
+
+export const formatDateTime = (dateString: string) => {
+  return new Date(dateString).toLocaleString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+};
+
+export const formatUTCDate = (dateString: string) => {
+  return format(new Date(dateString), "MMM d, HH:mm 'UTC'");
+};
+
+export const getIncidentStatusColor = (status: IncidentStatus): string => {
+  switch (status) {
+    case "resolved":
+      return "text-green-600";
+    case "investigating":
+      return "text-red-600";
+    case "identified":
+      return "text-orange-600";
+    case "monitoring":
+      return "text-blue-600";
+    default:
+      return "text-gray-600";
+  }
+};
+
+export const getMaintenanceStatus = (maintenance: any) => {
+  const now = new Date();
+  const startTime = new Date(maintenance.start_time);
+  const endTime = new Date(maintenance.end_time);
+
+  if (isBefore(now, startTime)) {
+    return "Scheduled";
+  } else if (isAfter(now, startTime) && isBefore(now, endTime)) {
+    return "In Progress";
+  } else {
+    return "Completed";
+  }
+};
+
+export const getMaintenanceStatusColor = (status: string): string => {
+  switch (status) {
+    case "Scheduled":
+      return "text-blue-600";
+    case "In Progress":
+      return "text-orange-600";
+    case "Completed":
+      return "text-green-600";
+    default:
+      return "text-gray-600";
+  }
+};
