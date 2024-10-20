@@ -85,3 +85,34 @@ export const INCIDENT_IMPACT_LABELS = {
   [INCIDENT_IMPACT.MAJOR]: "Major",
   [INCIDENT_IMPACT.CRITICAL]: "Critical",
 };
+
+export const MAINTENANCE_STATUS = {
+  SCHEDULED: "scheduled",
+  IN_PROGRESS: "in_progress",
+  COMPLETED: "completed",
+} as const;
+
+export const MAINTENANCE_STATUS_LABELS: Record<MaintenanceStatus, string> = {
+  [MAINTENANCE_STATUS.SCHEDULED]: "Scheduled",
+  [MAINTENANCE_STATUS.IN_PROGRESS]: "In Progress",
+  [MAINTENANCE_STATUS.COMPLETED]: "Completed",
+};
+
+export const MAINTENANCE_IMPACT = {
+  NONE: "none",
+  MINOR: "minor",
+  MAJOR: "major",
+  CRITICAL: "critical",
+} as const;
+
+export const MAINTENANCE_IMPACT_LABELS: Record<MaintenanceImpact, string> = {
+  [MAINTENANCE_IMPACT.NONE]: "None",
+  [MAINTENANCE_IMPACT.MINOR]: "Minor",
+  [MAINTENANCE_IMPACT.MAJOR]: "Major",
+  [MAINTENANCE_IMPACT.CRITICAL]: "Critical",
+};
+
+export type MaintenanceStatus =
+  (typeof MAINTENANCE_STATUS)[keyof typeof MAINTENANCE_STATUS];
+export type MaintenanceImpact =
+  (typeof MAINTENANCE_IMPACT)[keyof typeof MAINTENANCE_IMPACT];

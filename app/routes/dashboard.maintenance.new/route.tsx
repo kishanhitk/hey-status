@@ -45,6 +45,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { AlertCircle, AlertTriangle, Clock, CheckCircle } from "lucide-react";
+import { MAINTENANCE_IMPACT, MAINTENANCE_IMPACT_LABELS } from "~/lib/constants";
+import { Checkbox } from "~/components/ui/checkbox";
 
 type Service = {
   id: string;
@@ -57,11 +60,13 @@ const formSchema = z.object({
   }),
   description: z.string().optional(),
   status: z.enum(["scheduled", "in_progress", "completed"]),
+  impact: z.enum(["none", "minor", "major", "critical"]),
   scheduled_start_time: z.date(),
   scheduled_end_time: z.date(),
   serviceIds: z.array(z.string()).min(1, {
     message: "Please select at least one affected service.",
   }),
+  autoChangeStatus: z.boolean().default(false),
 });
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
@@ -89,7 +94,9 @@ export default function NewMaintenance() {
       title: "",
       description: "",
       status: "scheduled",
+      impact: "none",
       serviceIds: [],
+      autoChangeStatus: false,
     },
   });
 
@@ -117,6 +124,7 @@ export default function NewMaintenance() {
           title: values.title,
           description: values.description,
           status: values.status,
+          impact: values.impact,
           scheduled_start_time: values.scheduled_start_time,
           scheduled_end_time: values.scheduled_end_time,
           organization_id: user?.profile?.organization_id,
@@ -134,6 +142,7 @@ export default function NewMaintenance() {
             values.serviceIds.map((serviceId) => ({
               scheduled_maintenance_id: data.id,
               service_id: serviceId,
+              auto_change_status: values.autoChangeStatus,
             }))
           );
 
@@ -359,6 +368,68 @@ export default function NewMaintenance() {
                   Select the services affected by this maintenance.
                 </FormDescription>
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="impact"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Impact</FormLabel>
+                <FormControl>
+                  <div className="flex space-x-4">
+                    {Object.entries(MAINTENANCE_IMPACT).map(([key, value]) => (
+                      <label key={value} className="flex items-center">
+                        <input
+                          type="radio"
+                          {...field}
+                          value={value}
+                          checked={field.value === value}
+                          className="sr-only"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => field.onChange(value)}
+                          className={`border-gray-300 text-gray-500 ${
+                            field.value === value
+                              ? "border-black text-black"
+                              : ""
+                          }`}
+                        >
+                          {MAINTENANCE_IMPACT_LABELS[value]}
+                        </Button>
+                      </label>
+                    ))}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="autoChangeStatus"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>
+                    Automatically change status of affected services
+                  </FormLabel>
+                  <FormDescription>
+                    This will update the status of the selected services when
+                    the maintenance starts and ends.
+                  </FormDescription>
+                </div>
               </FormItem>
             )}
           />
