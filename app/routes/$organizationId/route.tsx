@@ -4,18 +4,20 @@ import { createServerSupabase } from "~/utils/supabase.server";
 import { CheckCircle, AlertTriangle, ExternalLink } from "lucide-react";
 import React from "react";
 import {
-  getIncidentStatusIcon,
-  getServiceStatusIcon,
+  INCIDENT_STATUS_ICONS,
   INCIDENT_STATUS_LABELS,
   IncidentStatus,
   MAINTENANCE_IMPACT_LABELS,
   MaintenanceImpact,
-  formatDateTime,
-  formatUTCDate,
-  getIncidentStatusColor,
-  getMaintenanceStatus,
-  getMaintenanceStatusColor,
+  SERVICE_STATUS_ICONS,
+  INCIDENT_STATUS_COLORS,
+  MAINTENANCE_STATUS,
+  MAINTENANCE_STATUS_COLORS,
+  MAINTENANCE_STATUS_LABELS,
+  MaintenanceStatus,
+  ServiceStatus,
 } from "~/lib/constants";
+import { formatDateTime, formatUTCDate } from "~/utils/dateTime";
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { organizationId } = params;
@@ -107,6 +109,20 @@ export default function PublicStatusPage() {
     (service) => service.current_status === "operational"
   );
 
+  const getMaintenanceStatus = (maintenance: any): MaintenanceStatus => {
+    const now = new Date();
+    const startTime = new Date(maintenance.start_time);
+    const endTime = new Date(maintenance.end_time);
+
+    if (now < startTime) {
+      return MAINTENANCE_STATUS.SCHEDULED;
+    } else if (now >= startTime && now < endTime) {
+      return MAINTENANCE_STATUS.IN_PROGRESS;
+    } else {
+      return MAINTENANCE_STATUS.COMPLETED;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white border-b">
@@ -172,7 +188,9 @@ export default function PublicStatusPage() {
                   <span className="text-lg text-gray-900">{service.name}</span>
                   <div className="flex items-center">
                     {React.createElement(
-                      getServiceStatusIcon(service.current_status),
+                      SERVICE_STATUS_ICONS[
+                        service.current_status as ServiceStatus
+                      ],
                       { className: "h-5 w-5" }
                     )}
                     <span className="ml-2 text-sm capitalize">
@@ -194,14 +212,19 @@ export default function PublicStatusPage() {
                   return (
                     <div key={maintenance.id} className="border-b pb-6">
                       <h3
-                        className={`text-xl font-semibold mb-2 ${getMaintenanceStatusColor(
-                          status
-                        )}`}
+                        className={`text-xl font-semibold mb-2 ${MAINTENANCE_STATUS_COLORS[status]}`}
                       >
                         {maintenance.title}
                       </h3>
                       <div className="space-y-2 mb-4">
-                        <p className="text-gray-600">Status: {status}</p>
+                        <p className="text-gray-600">
+                          Status:{" "}
+                          {
+                            MAINTENANCE_STATUS_LABELS[
+                              status as MaintenanceStatus
+                            ]
+                          }
+                        </p>
                         <p className="text-gray-600">
                           Impact:{" "}
                           {
@@ -217,7 +240,7 @@ export default function PublicStatusPage() {
                         <p className="text-gray-600">
                           Affected Services:{" "}
                           {maintenance.services_scheduled_maintenances
-                            .map((ssm) => ssm.services.name)
+                            .map((ssm) => ssm.services?.name)
                             .join(", ")}
                         </p>
                       </div>
@@ -245,9 +268,11 @@ export default function PublicStatusPage() {
               {incidents.map((incident) => (
                 <div key={incident.id} className="border-b pb-6">
                   <h3
-                    className={`text-xl font-semibold mb-2 ${getIncidentStatusColor(
-                      incident.incident_updates[0]?.status as IncidentStatus
-                    )}`}
+                    className={`text-xl font-semibold mb-2 ${
+                      INCIDENT_STATUS_COLORS[
+                        incident.incident_updates[0]?.status as IncidentStatus
+                      ]
+                    }`}
                   >
                     {incident.title}
                   </h3>
@@ -256,7 +281,7 @@ export default function PublicStatusPage() {
                     <p className="text-gray-600">
                       Affected Services:{" "}
                       {incident.services_incidents
-                        .map((si) => si.service.name)
+                        .map((si) => si.service?.name)
                         .join(", ")}
                     </p>
                   </div>
@@ -265,9 +290,9 @@ export default function PublicStatusPage() {
                       <div key={update.id}>
                         <div className="flex items-center">
                           {React.createElement(
-                            getIncidentStatusIcon(
+                            INCIDENT_STATUS_ICONS[
                               update.status as IncidentStatus
-                            ),
+                            ],
                             { className: "h-5 w-5 mr-2" }
                           )}
                           <span className="font-semibold">
