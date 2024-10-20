@@ -2,6 +2,18 @@ import { useParams } from "@remix-run/react";
 import { useQuery } from "@tanstack/react-query";
 import { useSupabase } from "~/hooks/useSupabase";
 
+type Service = {
+  id: string;
+  name: string;
+  // Add other properties as needed
+};
+
+type StatusLog = {
+  service_id: string;
+  status: string;
+  created_at: string;
+};
+
 export const StatusHeatmap = ({ services }: { services: Service[] }) => {
   const { organizationId } = useParams();
   const supabase = useSupabase();
@@ -30,67 +42,91 @@ export const StatusHeatmap = ({ services }: { services: Service[] }) => {
         console.error("Error fetching status logs:", error);
         throw error;
       }
-      console.log(data);
-      return data;
+      return data as StatusLog[];
     },
   });
 
-  const calculateDailyStatus = () => {
-    const dailyStatus: Record<string, Record<string, number>> = {};
+  const calculateDailyDowntime = () => {
+    const dailyDowntime: Record<string, Record<string, number>> = {};
     const now = new Date();
 
     services.forEach((service) => {
-      dailyStatus[service.id] = {};
+      dailyDowntime[service.id] = {};
       for (let i = 29; i >= 0; i--) {
         const date = new Date(now);
         date.setDate(date.getDate() - i);
         const dateString = date.toISOString().split("T")[0];
-        dailyStatus[service.id][dateString] = 100; // Assume 100% uptime by default
+        dailyDowntime[service.id][dateString] = 0; // Initialize with 0 minutes of downtime
       }
     });
 
-    statusData?.forEach((log) => {
-      const date = new Date(log.created_at);
-      const dateString = date.toISOString().split("T")[0];
-      if (dailyStatus[log.service_id][dateString] !== undefined) {
+    if (statusData) {
+      statusData.forEach((log, index) => {
+        const startDate = new Date(log.created_at);
+        const dateString = startDate.toISOString().split("T")[0];
+
         if (log.status !== "operational") {
-          dailyStatus[log.service_id][dateString] -= 25; // Reduce uptime by 25% for each non-operational status
-        }
-      }
-    });
+          const endDate =
+            index < statusData.length - 1
+              ? new Date(statusData[index + 1].created_at)
+              : new Date(); // Use current time for the last log
 
-    return dailyStatus;
+          const downtimeMinutes = Math.floor(
+            (endDate.getTime() - startDate.getTime()) / (1000 * 60)
+          );
+          dailyDowntime[log.service_id][dateString] += downtimeMinutes;
+        }
+      });
+    }
+
+    return dailyDowntime;
   };
 
-  const dailyStatus = calculateDailyStatus();
+  const dailyDowntime = calculateDailyDowntime();
+
+  const getDowntimeColor = (downtimeMinutes: number) => {
+    if (downtimeMinutes === 0) return "bg-green-500";
+    if (downtimeMinutes < 60) return "bg-green-300"; // Less than 1 hour
+    if (downtimeMinutes < 180) return "bg-yellow-300"; // Less than 3 hours
+    if (downtimeMinutes < 360) return "bg-orange-300"; // Less than 6 hours
+    return "bg-red-500"; // 6 hours or more
+  };
+
+  const formatDowntime = (minutes: number) => {
+    if (minutes === 0) return "No downtime";
+    if (minutes < 60) return `${minutes} minute${minutes !== 1 ? "s" : ""}`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours} hour${hours !== 1 ? "s" : ""} ${remainingMinutes} minute${
+      remainingMinutes !== 1 ? "s" : ""
+    }`;
+  };
 
   return (
     <div className="mt-8">
       <h3 className="text-xl font-semibold mb-4">30-Day Status History</h3>
-      <div className=" gap-1">
+      <div className="space-y-4">
         {services.map((service) => (
-          <div key={service.id} className="row-span-1 border-b pb-6">
+          <div key={service.id} className="border-b pb-6">
             <div className="text-sm font-medium mb-1">{service.name}</div>
-            <div className="grid grid-cols-31 w-full justify-between">
-              {Object.entries(dailyStatus[service.id]).map(([date, uptime]) => (
-                <div
-                  key={date}
-                  className={`w-6 h-12 rounded-2xl ${getUptimeColor(uptime)}`}
-                  title={`${service.name} - ${date}: ${uptime}% uptime`}
-                ></div>
-              ))}
+            <div className="grid grid-cols-31 gap-1">
+              {Object.entries(dailyDowntime[service.id]).map(
+                ([date, downtime]) => (
+                  <div
+                    key={date}
+                    className={`w-6 h-12 rounded-2xl ${getDowntimeColor(
+                      downtime
+                    )}`}
+                    title={`${service.name} - ${date}: ${formatDowntime(
+                      downtime
+                    )} of downtime`}
+                  ></div>
+                )
+              )}
             </div>
           </div>
         ))}
       </div>
     </div>
   );
-};
-
-const getUptimeColor = (uptime: number) => {
-  if (uptime >= 99) return "bg-green-500";
-  if (uptime >= 95) return "bg-green-300";
-  if (uptime >= 90) return "bg-yellow-300";
-  if (uptime >= 80) return "bg-orange-300";
-  return "bg-red-500";
 };
