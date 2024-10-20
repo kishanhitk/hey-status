@@ -18,6 +18,8 @@ import {
   MaintenanceStatus,
   ServiceStatus,
   SERVICE_STATUS_COLORS,
+  INCIDENT_IMPACT_LABELS,
+  IncidentImpact,
 } from "~/lib/constants";
 import { formatDateTime, formatLocalDateTime } from "~/utils/dateTime";
 import {
@@ -497,7 +499,14 @@ export default function PublicStatusPage() {
                     {incident.title}
                   </h3>
                   <div className="space-y-2 mb-4">
-                    <p className="text-gray-600">Impact: {incident.impact}</p>
+                    <p className="text-gray-600">
+                      Impact:{" "}
+                      {
+                        INCIDENT_IMPACT_LABELS[
+                          incident.impact as IncidentImpact
+                        ]
+                      }
+                    </p>
                     <p className="text-gray-600">
                       Affected Services:{" "}
                       {incident.services_incidents
@@ -505,7 +514,7 @@ export default function PublicStatusPage() {
                         .join(", ")}
                     </p>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-8">
                     {incident.incident_updates.map((update) => (
                       <div key={update.id}>
                         <div className="flex items-center">
@@ -523,10 +532,12 @@ export default function PublicStatusPage() {
                             }
                           </span>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {formatDateTime(update.created_at)}
+                        <div className="text-sm text-gray-500 my-1">
+                          {formatDateTime(update?.created_at ?? "")}
                         </div>
-                        <p className="text-gray-700">{update.message}</p>
+                        <p className="text-gray-700 whitespace-pre-wrap">
+                          {update.message}
+                        </p>
                       </div>
                     ))}
                   </div>
