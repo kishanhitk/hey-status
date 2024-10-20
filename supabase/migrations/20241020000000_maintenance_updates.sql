@@ -18,6 +18,3 @@ CREATE TABLE maintenance_updates (
 -- Add index for faster queries
 CREATE INDEX idx_maintenance_updates_scheduled_maintenance_id ON maintenance_updates(scheduled_maintenance_id);
 
--- Remove the auto_change_status column from services_scheduled_maintenances
-ALTER TABLE services_scheduled_maintenances
-DROP COLUMN auto_change_status;
