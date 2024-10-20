@@ -38,16 +38,7 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { Calendar } from "~/components/ui/calendar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
-import { AlertCircle, AlertTriangle, Clock, CheckCircle } from "lucide-react";
 import { MAINTENANCE_IMPACT, MAINTENANCE_IMPACT_LABELS } from "~/lib/constants";
-import { Checkbox } from "~/components/ui/checkbox";
 
 type Service = {
   id: string;
@@ -61,15 +52,15 @@ const formSchema = z
     }),
     description: z.string().optional(),
     impact: z.enum(["none", "minor", "major", "critical"]),
-    scheduled_start_time: z.date(),
-    scheduled_end_time: z.date(),
+    start_time: z.date(),
+    end_time: z.date(),
     serviceIds: z.array(z.string()).min(1, {
       message: "Please select at least one affected service.",
     }),
   })
-  .refine((data) => data.scheduled_end_time > data.scheduled_start_time, {
+  .refine((data) => data.end_time > data.start_time, {
     message: "End time must be after start time",
-    path: ["scheduled_end_time"],
+    path: ["end_time"],
   });
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
@@ -97,8 +88,8 @@ export default function NewMaintenance() {
       title: "",
       description: "",
       impact: "none",
-      scheduled_start_time: new Date(),
-      scheduled_end_time: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
+      start_time: new Date(),
+      end_time: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
       serviceIds: [],
     },
   });
@@ -127,8 +118,8 @@ export default function NewMaintenance() {
           title: values.title,
           description: values.description,
           impact: values.impact,
-          scheduled_start_time: values.scheduled_start_time,
-          scheduled_end_time: values.scheduled_end_time,
+          start_time: values.start_time,
+          end_time: values.end_time,
           organization_id: user?.profile?.organization_id,
           created_by: user?.id,
         })
@@ -260,10 +251,10 @@ export default function NewMaintenance() {
 
           <FormField
             control={form.control}
-            name="scheduled_start_time"
+            name="start_time"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel className="text-left">DateTime</FormLabel>
+                <FormLabel className="text-left">Start Time</FormLabel>
                 <Popover>
                   <FormControl>
                     <PopoverTrigger asChild>
@@ -303,10 +294,10 @@ export default function NewMaintenance() {
           />
           <FormField
             control={form.control}
-            name="scheduled_end_time"
+            name="end_time"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel className="text-left">Scheduled End Time</FormLabel>
+                <FormLabel className="text-left">End Time</FormLabel>
                 <Popover>
                   <FormControl>
                     <PopoverTrigger asChild>

@@ -34,28 +34,13 @@ export type Database = {
   }
   public: {
     Tables: {
-      example_table: {
-        Row: {
-          id: number
-          name: string
-        }
-        Insert: {
-          id?: number
-          name: string
-        }
-        Update: {
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
       incident_updates: {
         Row: {
           created_at: string | null
           created_by: string
           id: string
           incident_id: string
-          message: string
+          message: string | null
           status: string
         }
         Insert: {
@@ -63,7 +48,7 @@ export type Database = {
           created_by: string
           id?: string
           incident_id: string
-          message: string
+          message?: string | null
           status: string
         }
         Update: {
@@ -71,7 +56,7 @@ export type Database = {
           created_by?: string
           id?: string
           incident_id?: string
-          message?: string
+          message?: string | null
           status?: string
         }
         Relationships: [
@@ -263,44 +248,38 @@ export type Database = {
       }
       scheduled_maintenances: {
         Row: {
-          actual_end_time: string | null
-          actual_start_time: string | null
           created_at: string | null
           created_by: string
           description: string | null
+          end_time: string
           id: string
           impact: string | null
           organization_id: string
-          scheduled_end_time: string
-          scheduled_start_time: string
+          start_time: string
           title: string
           updated_at: string | null
         }
         Insert: {
-          actual_end_time?: string | null
-          actual_start_time?: string | null
           created_at?: string | null
           created_by: string
           description?: string | null
+          end_time: string
           id?: string
           impact?: string | null
           organization_id: string
-          scheduled_end_time: string
-          scheduled_start_time: string
+          start_time: string
           title: string
           updated_at?: string | null
         }
         Update: {
-          actual_end_time?: string | null
-          actual_start_time?: string | null
           created_at?: string | null
           created_by?: string
           description?: string | null
+          end_time?: string
           id?: string
           impact?: string | null
           organization_id?: string
-          scheduled_end_time?: string
-          scheduled_start_time?: string
+          start_time?: string
           title?: string
           updated_at?: string | null
         }
@@ -426,17 +405,14 @@ export type Database = {
       }
       services_scheduled_maintenances: {
         Row: {
-          auto_change_status: boolean | null
           scheduled_maintenance_id: string
           service_id: string
         }
         Insert: {
-          auto_change_status?: boolean | null
           scheduled_maintenance_id: string
           service_id: string
         }
         Update: {
-          auto_change_status?: boolean | null
           scheduled_maintenance_id?: string
           service_id?: string
         }
@@ -539,12 +515,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_latest_incident_status: {
-        Args: {
-          incident_id: string
-        }
-        Returns: string
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
