@@ -100,6 +100,7 @@ export default function Services() {
       return data;
     },
     initialData: initialServices,
+    staleTime: 1000,
   });
 
   const createServiceMutation = useMutation({
@@ -284,16 +285,20 @@ export default function Services() {
                       </SelectContent>
                     </Select>
                     <div className="relative ml-3">
-                      <div
-                        className={`w-3 h-3 rounded-full mr-2 ${
-                          STATUS_COLORS[service.current_status].dot
-                        } animate-ping absolute animate-all duration-[2000ms]`}
-                      ></div>
-                      <div
-                        className={`w-3 h-3 rounded-full mr-2 ${
-                          STATUS_COLORS[service.current_status].dot
-                        }`}
-                      ></div>
+                      {service.current_status && (
+                        <>
+                          <div
+                            className={`w-3 h-3 rounded-full mr-2 ${
+                              STATUS_COLORS[service.current_status].dot
+                            } animate-ping absolute animate-all duration-[2000ms]`}
+                          ></div>
+                          <div
+                            className={`w-3 h-3 rounded-full mr-2 ${
+                              STATUS_COLORS[service.current_status].dot
+                            }`}
+                          ></div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </TableCell>

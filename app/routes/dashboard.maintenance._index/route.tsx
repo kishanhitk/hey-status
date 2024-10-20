@@ -26,11 +26,6 @@ type Maintenance = {
   serviceIds: string[];
 };
 
-type Service = {
-  id: string;
-  name: string;
-};
-
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
   const { data: maintenances, error: maintenancesError } = await supabase.from(
@@ -120,61 +115,94 @@ export default function Maintenance() {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Scheduled Maintenance</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Scheduled Maintenance</h1>
+          <p className="text-sm text-gray-500 mt-1 max-w-lg">
+            Manage and track all scheduled maintenance for your services.
+          </p>
+        </div>
         <Button asChild>
           <Link to="/dashboard/maintenance/new">Schedule New Maintenance</Link>
         </Button>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Start Time</TableHead>
-            <TableHead>End Time</TableHead>
-            <TableHead>Affected Services</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {maintenances?.map((maintenance: Maintenance) => (
-            <TableRow key={maintenance.id}>
-              <TableCell>{maintenance.title}</TableCell>
-              <TableCell>{maintenance.status}</TableCell>
-              <TableCell>
-                {new Date(maintenance.scheduled_start_time).toLocaleString()}
-              </TableCell>
-              <TableCell>
-                {new Date(maintenance.scheduled_end_time).toLocaleString()}
-              </TableCell>
-              <TableCell>
-                {maintenance.serviceIds
-                  .map(
-                    (serviceId) =>
-                      services.find((s) => s.id === serviceId)?.name
-                  )
-                  .join(", ")}
-              </TableCell>
-              <TableCell>
-                <Button variant="outline" size="sm" className="mr-2" asChild>
-                  <Link to={`/dashboard/maintenance/${maintenance.id}`}>
-                    Edit
-                  </Link>
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(maintenance.id)}
-                  disabled={deleteMaintenance.isPending}
-                >
-                  {deleteMaintenance.isPending ? "Deleting..." : "Delete"}
-                </Button>
-              </TableCell>
+      {maintenances && maintenances.length > 0 ? (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Start Time</TableHead>
+              <TableHead>End Time</TableHead>
+              <TableHead>Affected Services</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {maintenances?.map((maintenance: Maintenance) => (
+              <TableRow key={maintenance.id}>
+                <TableCell className="underline">
+                  <Link
+                    to={`/dashboard/maintenance/${maintenance.id}`}
+                    prefetch="intent"
+                  >
+                    {maintenance.title}
+                  </Link>
+                </TableCell>
+                <TableCell>{maintenance.status}</TableCell>
+                <TableCell>
+                  {new Date(maintenance.scheduled_start_time).toLocaleString()}
+                </TableCell>
+                <TableCell>
+                  {new Date(maintenance.scheduled_end_time).toLocaleString()}
+                </TableCell>
+                <TableCell>
+                  {maintenance.serviceIds
+                    .map(
+                      (serviceId) =>
+                        services.find((s) => s.id === serviceId)?.name
+                    )
+                    .join(", ")}
+                </TableCell>
+                <TableCell>
+                  <Button variant="outline" size="sm" className="mr-2" asChild>
+                    <Link to={`/dashboard/maintenance/${maintenance.id}`}>
+                      Edit
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDelete(maintenance.id)}
+                    disabled={deleteMaintenance.isPending}
+                  >
+                    {deleteMaintenance.isPending ? "Deleting..." : "Delete"}
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      ) : (
+        <div className="text-center py-12 border border-dashed rounded-lg mx-auto w-full">
+          <h3 className="mt-2 text-lg font-semibold text-gray-900">
+            No scheduled maintenance yet
+          </h3>
+          <div className="mt-3">
+            <Button asChild>
+              <Link to="/dashboard/maintenance/new">
+                Schedule New Maintenance
+              </Link>
+            </Button>
+          </div>
+          <div className="mt-4 text-sm text-muted-foreground max-w-xs mx-auto">
+            <p>
+              Schedule maintenance to inform users about planned downtime or
+              service interruptions.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
