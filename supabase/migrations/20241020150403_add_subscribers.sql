@@ -28,3 +28,15 @@ CREATE POLICY "Allow organization members to view subscribers" ON public.subscri
             WHERE id = auth.uid()
         )
     );
+
+
+-- Webhook to notify subscribers of new incident updates
+create trigger "notify_subscribers_new_incident_update" after insert
+on "public"."incident_updates" for each row
+execute function "supabase_functions"."http_request"(
+  'http://host.docker.internal:54321/functions/v1/send-mail-to-subscribers',
+  'POST',
+  '{"Content-Type":"application/json"}',
+  '{}',
+  '1000'
+);
