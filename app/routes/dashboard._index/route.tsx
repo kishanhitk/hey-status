@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs, json } from "@remix-run/cloudflare";
+import { LoaderFunctionArgs, json, MetaFunction } from "@remix-run/cloudflare";
 import { Link, useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { Button } from "~/components/ui/button";
@@ -7,11 +7,20 @@ import { Database } from "~/types/supabase";
 import { CheckCircle, AlertTriangle, XCircle, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { SERVICE_STATUS_LABELS } from "~/lib/constants";
+import { metaGenerator } from "~/utils/metaGenerator";
 
 type Service = Database["public"]["Tables"]["services"]["Row"];
 type Incident = Database["public"]["Tables"]["incidents"]["Row"];
 type Maintenance =
   Database["public"]["Tables"]["scheduled_maintenances"]["Row"];
+
+export const meta: MetaFunction = () => {
+  return metaGenerator({
+    title: "Dashboard Overview",
+    description:
+      "Get an overview of your services, incidents, and scheduled maintenance.",
+  });
+};
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const env = context.cloudflare.env;

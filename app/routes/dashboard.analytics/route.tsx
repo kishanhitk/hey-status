@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs, json } from "@remix-run/cloudflare";
+import { LoaderFunctionArgs, json, MetaFunction } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -13,8 +13,17 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "~/components/ui/chart";
+import { metaGenerator } from "~/utils/metaGenerator";
 
 type Incident = Database["public"]["Tables"]["incidents"]["Row"];
+
+export const meta: MetaFunction = () => {
+  return metaGenerator({
+    title: "Analytics",
+    description:
+      "View analytics and insights about your services and incidents.",
+  });
+};
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const env = context.cloudflare.env;

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "@remix-run/react";
+import { useNavigate, MetaFunction } from "@remix-run/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -17,6 +17,7 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { toast } from "~/hooks/use-toast";
+import { metaGenerator } from "~/utils/metaGenerator";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -32,6 +33,14 @@ const formSchema = z.object({
         "Slug must contain only lowercase letters, numbers, and hyphens.",
     }),
 });
+
+export const meta: MetaFunction = () => {
+  return metaGenerator({
+    title: "Create Organization",
+    description:
+      "Set up your new organization to start monitoring your services.",
+  });
+};
 
 export default function CreateOrganization() {
   const [isLoading, setIsLoading] = useState(false);

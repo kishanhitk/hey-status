@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs, json } from "@remix-run/cloudflare";
+import { LoaderFunctionArgs, json, MetaFunction } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
@@ -42,6 +42,7 @@ import {
 import { toast } from "~/hooks/use-toast";
 import { useState } from "react";
 import { ROLE_LABELS, Role } from "~/lib/constants";
+import { metaGenerator } from "~/utils/metaGenerator";
 
 type TeamMember = {
   id: string;
@@ -63,6 +64,13 @@ const inviteFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   role: z.enum(["admin", "editor", "viewer"]),
 });
+
+export const meta: MetaFunction = () => {
+  return metaGenerator({
+    title: "Team Management",
+    description: "Manage your team members and invitations.",
+  });
+};
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);

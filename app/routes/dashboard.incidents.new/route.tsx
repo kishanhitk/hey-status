@@ -1,4 +1,4 @@
-import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
+import { json, LoaderFunctionArgs, MetaFunction } from "@remix-run/cloudflare";
 import { useLoaderData, useNavigate } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
@@ -37,6 +37,7 @@ import {
   SERVICE_STATUS,
   SERVICE_STATUS_LABELS,
 } from "~/lib/constants";
+import { metaGenerator } from "~/utils/metaGenerator";
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -72,6 +73,13 @@ function getServiceStatus(
       return SERVICE_STATUS.OPERATIONAL;
   }
 }
+
+export const meta: MetaFunction = () => {
+  return metaGenerator({
+    title: "Create New Incident",
+    description: "Report a new incident affecting your services.",
+  });
+};
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
