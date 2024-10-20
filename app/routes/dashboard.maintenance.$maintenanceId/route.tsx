@@ -79,7 +79,7 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
     .select(
       `
       *,
-      services_scheduled_maintenances(service_id, auto_change_status),
+      services_scheduled_maintenances(service_id),
       maintenance_updates(*)
     `
     )
@@ -138,7 +138,7 @@ export default function MaintenanceDetails() {
         .select(
           `
           *,
-          services_scheduled_maintenances(service_id, auto_change_status),
+          services_scheduled_maintenances(service_id),
           maintenance_updates(*)
         `
         )
@@ -204,7 +204,6 @@ export default function MaintenanceDetails() {
           values.serviceIds.map((serviceId) => ({
             scheduled_maintenance_id: maintenanceId,
             service_id: serviceId,
-            auto_change_status: values.autoChangeStatus,
           }))
         );
       }
