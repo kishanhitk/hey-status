@@ -1,4 +1,10 @@
-import { AlertTriangle, AlertCircle, Clock, CheckCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  AlertCircle,
+  Clock,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 
 export const ROLES = {
   ADMIN: "admin",
@@ -31,6 +37,17 @@ export const SERVICE_STATUS_LABELS = {
   [SERVICE_STATUS.MAJOR_OUTAGE]: "Major Outage",
 };
 
+export const SERVICE_STATUS_ICONS = {
+  [SERVICE_STATUS.OPERATIONAL]: CheckCircle,
+  [SERVICE_STATUS.DEGRADED_PERFORMANCE]: AlertTriangle,
+  [SERVICE_STATUS.PARTIAL_OUTAGE]: XCircle,
+  [SERVICE_STATUS.MAJOR_OUTAGE]: XCircle,
+};
+
+export const getServiceStatusIcon = (status: ServiceStatus) => {
+  return SERVICE_STATUS_ICONS[status];
+};
+
 export const INCIDENT_STATUS = {
   INVESTIGATING: "investigating",
   IDENTIFIED: "identified",
@@ -53,6 +70,10 @@ export const INCIDENT_STATUS_ICONS = {
   [INCIDENT_STATUS.IDENTIFIED]: AlertCircle,
   [INCIDENT_STATUS.MONITORING]: Clock,
   [INCIDENT_STATUS.RESOLVED]: CheckCircle,
+};
+
+export const getIncidentStatusIcon = (status: IncidentStatus) => {
+  return INCIDENT_STATUS_ICONS[status];
 };
 
 export const INCIDENT_STATUS_COLORS = {

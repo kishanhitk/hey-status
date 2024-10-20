@@ -1,20 +1,17 @@
 import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
 import { useLoaderData, Link } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
-import {
-  CheckCircle,
-  AlertTriangle,
-  XCircle,
-  ExternalLink,
-} from "lucide-react";
+import { CheckCircle, AlertTriangle, ExternalLink } from "lucide-react";
 import { format, isBefore, isAfter } from "date-fns";
 import {
-  INCIDENT_STATUS_ICONS,
+  getIncidentStatusIcon,
+  getServiceStatusIcon,
   INCIDENT_STATUS_LABELS,
   IncidentStatus,
   MAINTENANCE_IMPACT_LABELS,
   MaintenanceImpact,
 } from "~/lib/constants";
+import React from "react";
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { organizationId } = params;
@@ -127,18 +124,6 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     uptime: averageUptime,
     scheduledMaintenances: scheduledMaintenances || [],
   });
-}
-
-function getStatusIcon(status: Service["current_status"]) {
-  switch (status) {
-    case "operational":
-      return <CheckCircle className="h-5 w-5 text-green-500" />;
-    case "degraded_performance":
-      return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
-    case "partial_outage":
-    case "major_outage":
-      return <XCircle className="h-5 w-5 text-red-500" />;
-  }
 }
 
 function formatDateTime(dateString: string) {
@@ -279,7 +264,9 @@ export default function PublicStatusPage() {
                 >
                   <span className="text-lg text-gray-900">{service.name}</span>
                   <div className="flex items-center">
-                    {getStatusIcon(service.current_status)}
+                    {React.createElement(
+                      getServiceStatusIcon(service.current_status)
+                    )}
                     <span className="ml-2 text-sm capitalize">
                       {service.current_status.replace("_", " ")}
                     </span>
@@ -381,7 +368,12 @@ export default function PublicStatusPage() {
                       .map((update) => (
                         <div key={update.id}>
                           <div className="flex items-center">
-                            <span className="font-semibold mr-2">
+                            {React.createElement(
+                              getIncidentStatusIcon(
+                                update.status as IncidentStatus
+                              )
+                            )}
+                            <span className="font-semibold">
                               {
                                 INCIDENT_STATUS_LABELS[
                                   update.status as IncidentStatus
