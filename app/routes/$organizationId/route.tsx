@@ -6,38 +6,23 @@ import {
   AlertTriangle,
   XCircle,
   ExternalLink,
-  Clock,
 } from "lucide-react";
 import { format, isBefore, isAfter } from "date-fns";
-import { MAINTENANCE_IMPACT_LABELS, MaintenanceImpact } from "~/lib/constants";
-
-type Service = {
-  id: string;
-  name: string;
-  description: string | null;
-  current_status:
-    | "operational"
-    | "degraded_performance"
-    | "partial_outage"
-    | "major_outage";
-};
-
-type IncidentStatus =
-  | "resolved"
-  | "investigating"
-  | "identified"
-  | "monitoring";
-
-const INCIDENT_STATUS_LABELS: Record<IncidentStatus, string> = {
-  resolved: "Resolved",
-  investigating: "Investigating",
-  identified: "Identified",
-  monitoring: "Monitoring",
-};
+import {
+  INCIDENT_STATUS_ICONS,
+  INCIDENT_STATUS_LABELS,
+  IncidentStatus,
+  MAINTENANCE_IMPACT_LABELS,
+  MaintenanceImpact,
+} from "~/lib/constants";
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { organizationId } = params;
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
+
+  if (!organizationId) {
+    throw new Response("Not Found", { status: 404 });
+  }
 
   // Fetch organization
   const { data: organization } = await supabase
@@ -154,17 +139,6 @@ function getStatusIcon(status: Service["current_status"]) {
     case "major_outage":
       return <XCircle className="h-5 w-5 text-red-500" />;
   }
-}
-
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
 }
 
 function formatDateTime(dateString: string) {
