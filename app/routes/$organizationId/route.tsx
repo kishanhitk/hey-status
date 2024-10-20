@@ -35,6 +35,7 @@ import {
 import { StatusHeatmap } from "./StatusHeatmap";
 import { toast } from "~/hooks/use-toast";
 import { NotFound } from "~/components/NotFound";
+import { SubscribeDialog } from "./SubscribeDialog";
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { organizationId } = params;
@@ -333,31 +334,34 @@ export default function PublicStatusPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <svg
-              className="h-8 w-8 text-blue-500"
-              fill="none"
-              height="24"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              width="24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-            </svg>
-            <span className="ml-2 text-xl font-bold text-gray-900">
-              {organization.name} Status
-            </span>
+      <div className="bg-white border-b">
+        <header className=" flex items-center justify-between container">
+          <div className="py-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <svg
+                className="h-8 w-8 text-blue-500"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+              </svg>
+              <span className="ml-2 text-xl font-bold text-gray-900">
+                {organization.name} Status
+              </span>
+            </div>
           </div>
-        </div>
-      </header>
+          <SubscribeDialog organizationId={organization.id} />
+        </header>
+      </div>
       <main className="flex-grow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="container py-8">
           <div className="bg-white shadow rounded-lg p-6 mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
               Current Status
