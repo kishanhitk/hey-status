@@ -102,13 +102,13 @@ const maintenanceSchema = z
     title: z.string().min(2, "Title must be at least 2 characters long"),
     description: z.string().optional(),
     impact: z.enum(["none", "minor", "major", "critical"]),
-    scheduled_start_time: z.date(),
-    scheduled_end_time: z.date(),
+    start_time: z.date(),
+    end_time: z.date(),
     serviceIds: z.array(z.string()),
   })
-  .refine((data) => data.scheduled_end_time > data.scheduled_start_time, {
+  .refine((data) => data.end_time > data.start_time, {
     message: "End time must be after start time",
-    path: ["scheduled_end_time"],
+    path: ["end_time"],
   });
 
 const updateSchema = z.object({
@@ -156,11 +156,11 @@ export default function MaintenanceDetails() {
       title: maintenanceData?.title || "",
       description: maintenanceData?.description || "",
       impact: maintenanceData?.impact || "none",
-      scheduled_start_time: maintenanceData?.scheduled_start_time
-        ? new Date(maintenanceData.scheduled_start_time)
+      start_time: maintenanceData?.start_time
+        ? new Date(maintenanceData.start_time)
         : new Date(),
-      scheduled_end_time: maintenanceData?.scheduled_end_time
-        ? new Date(maintenanceData.scheduled_end_time)
+      end_time: maintenanceData?.end_time
+        ? new Date(maintenanceData.end_time)
         : new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now if not set
       serviceIds:
         maintenanceData?.services_scheduled_maintenances?.map(
@@ -184,8 +184,8 @@ export default function MaintenanceDetails() {
           title: values.title,
           description: values.description,
           impact: values.impact,
-          scheduled_start_time: values.scheduled_start_time.toISOString(),
-          scheduled_end_time: values.scheduled_end_time.toISOString(),
+          start_time: values.start_time.toISOString(),
+          end_time: values.end_time.toISOString(),
         })
         .eq("id", maintenanceId)
         .select()
@@ -262,7 +262,7 @@ export default function MaintenanceDetails() {
       const { data, error } = await supabase
         .from("scheduled_maintenances")
         .update({
-          actual_start_time: new Date().toISOString(),
+          start_time: new Date().toISOString(),
         })
         .eq("id", maintenanceId)
         .select()
@@ -291,7 +291,7 @@ export default function MaintenanceDetails() {
       const { data, error } = await supabase
         .from("scheduled_maintenances")
         .update({
-          actual_end_time: new Date().toISOString(),
+          end_time: new Date().toISOString(),
         })
         .eq("id", maintenanceId)
         .select()
@@ -381,20 +381,12 @@ export default function MaintenanceDetails() {
 
   const getMaintenanceStatus = (maintenance) => {
     const now = new Date();
-    const startTime = new Date(
-      maintenance.actual_start_time || maintenance.scheduled_start_time
-    );
-    const endTime = new Date(
-      maintenance.actual_end_time || maintenance.scheduled_end_time
-    );
+    const startTime = new Date(maintenance.start_time);
+    const endTime = new Date(maintenance.end_time);
 
-    if (maintenance.actual_end_time) {
-      return "Completed";
-    } else if (maintenance.actual_start_time) {
-      return now > endTime ? "Completed" : "In Progress";
-    } else if (now < startTime) {
+    if (now < startTime) {
       return "Scheduled";
-    } else if (now >= startTime && now <= endTime) {
+    } else if (now >= startTime && now < endTime) {
       return "In Progress";
     } else {
       return "Completed";
@@ -506,10 +498,10 @@ export default function MaintenanceDetails() {
               <div className="flex gap-4">
                 <FormField
                   control={maintenanceForm.control}
-                  name="scheduled_start_time"
+                  name="start_time"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Scheduled Start Time</FormLabel>
+                      <FormLabel>Start Time</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -551,10 +543,10 @@ export default function MaintenanceDetails() {
 
                 <FormField
                   control={maintenanceForm.control}
-                  name="scheduled_end_time"
+                  name="end_time"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Scheduled End Time</FormLabel>
+                      <FormLabel>End Time</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -705,7 +697,7 @@ export default function MaintenanceDetails() {
                     <DialogTitle>Start Maintenance</DialogTitle>
                     <DialogDescription>
                       Are you sure you want to start this maintenance now? This
-                      will set the actual start time to the current time.
+                      will update the start time to the current time.
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
@@ -735,7 +727,7 @@ export default function MaintenanceDetails() {
                     <DialogTitle>Complete Maintenance</DialogTitle>
                     <DialogDescription>
                       Are you sure you want to complete this maintenance now?
-                      This will set the actual end time to the current time.
+                      This will update the end time to the current time.
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
