@@ -1,6 +1,6 @@
 import { Button } from "~/components/ui/button";
 import { useSupabase } from "~/hooks/useSupabase";
-import { useNavigate, useSearchParams } from "@remix-run/react";
+import { MetaFunction, useNavigate, useSearchParams } from "@remix-run/react";
 import { Loader2 } from "lucide-react";
 
 import {
@@ -12,6 +12,13 @@ import {
 } from "~/components/ui/card";
 import { useUser } from "~/hooks/useUser";
 import { useEffect } from "react";
+import { metaGenerator } from "~/utils/metaGenerator";
+
+export const meta: MetaFunction = () => {
+  return metaGenerator({
+    title: "Login",
+  });
+};
 
 const LoginPage = () => {
   const supabase = useSupabase();

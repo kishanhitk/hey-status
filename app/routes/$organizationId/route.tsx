@@ -1,4 +1,4 @@
-import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
+import { json, LoaderFunctionArgs, MetaFunction } from "@remix-run/cloudflare";
 import {
   useLoaderData,
   useRouteError,
@@ -36,6 +36,20 @@ import { StatusHeatmap } from "./StatusHeatmap";
 import { toast } from "~/hooks/use-toast";
 import { NotFound } from "~/components/NotFound";
 import { SubscribeDialog } from "./SubscribeDialog";
+import { metaGenerator } from "~/utils/metaGenerator";
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  if (!data) {
+    return metaGenerator({
+      title: "Organization Not Found",
+      description: "The requested organization could not be found.",
+    });
+  }
+  return metaGenerator({
+    title: `${data.organization.name} Status`,
+    description: `Current status and incident history for ${data.organization.name} services.`,
+  });
+};
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { organizationId } = params;
