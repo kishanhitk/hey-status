@@ -184,6 +184,11 @@ export default function PublicStatusPage() {
             `
             )
             .eq("id", payload.new.id)
+            .order("created_at", { ascending: false })
+            .order("created_at", {
+              ascending: false,
+              foreignTable: "incident_updates",
+            })
             .single();
 
           if (error) {
@@ -229,6 +234,10 @@ export default function PublicStatusPage() {
             )
             .eq("id", payload.new.incident_id)
             .order("created_at", { ascending: false })
+            .order("created_at", {
+              ascending: false,
+              foreignTable: "incident_updates",
+            })
             .single();
 
           if (error) {
