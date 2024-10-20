@@ -1,6 +1,12 @@
 import { useParams } from "@remix-run/react";
 import { useQuery } from "@tanstack/react-query";
 import { useSupabase } from "~/hooks/useSupabase";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 type Service = {
   id: string;
@@ -103,24 +109,38 @@ export const StatusHeatmap = ({ services }: { services: Service[] }) => {
   };
 
   return (
-    <div className="mt-8">
-      <h3 className="text-xl font-semibold mb-4">30-Day Status History</h3>
-      <div className="space-y-4">
+    <div className="bg-white shadow rounded-lg p-6 mb-8">
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        30-Day Status History
+      </h2>
+      <div className="space-y-6">
         {services.map((service) => (
-          <div key={service.id} className="border-b pb-6">
-            <div className="text-sm font-medium mb-1">{service.name}</div>
-            <div className="grid grid-cols-31 gap-1">
+          <div
+            key={service.id}
+            className="border-b pb-6 last:border-b-0 last:pb-0"
+          >
+            <div className="text-lg font-medium mb-2 text-gray-900">
+              {service.name}
+            </div>
+            <div className="grid grid-cols-31 gap-7 overflow-x-auto">
               {Object.entries(dailyDowntime[service.id]).map(
                 ([date, downtime]) => (
-                  <div
-                    key={date}
-                    className={`w-6 h-12 rounded-2xl ${getDowntimeColor(
-                      downtime
-                    )}`}
-                    title={`${service.name} - ${date}: ${formatDowntime(
-                      downtime
-                    )} of downtime`}
-                  ></div>
+                  <TooltipProvider key={date}>
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger>
+                        <div
+                          className={`w-6 h-12 rounded-md ${getDowntimeColor(
+                            downtime
+                          )}`}
+                        ></div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="font-semibold">{service.name}</p>
+                        <p>{date}</p>
+                        <p>{formatDowntime(downtime)} of downtime</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )
               )}
             </div>
