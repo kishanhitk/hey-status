@@ -21,8 +21,6 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
   const { supabase, headers } = createServerSupabase(request, env);
 
-  const { data } = await supabase.from("example_table").select("*");
-
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -35,7 +33,6 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     {
       user,
       session,
-      data,
       env: {
         SUPABASE_URL: env.VITE_SUPABASE_URL,
         SUPABASE_ANON_KEY: env.VITE_SUPABASE_ANON_KEY,

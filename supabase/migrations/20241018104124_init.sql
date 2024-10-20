@@ -1,7 +1,4 @@
-CREATE TABLE IF NOT EXISTS example_table (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
-);
+
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

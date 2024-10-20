@@ -6,8 +6,6 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
   const { supabase } = createServerSupabase(request, env);
 
-  const { data } = await supabase.from("example_table").select("*");
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -26,5 +24,5 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     return redirect("/create-organization");
   }
 
-  return json({ user, userProfile, data });
+  return json({ user, userProfile });
 }

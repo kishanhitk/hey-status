@@ -100,7 +100,6 @@ export type Database = {
           impact: string
           organization_id: string
           resolved_at: string | null
-          status: string
           title: string
           updated_at: string | null
         }
@@ -112,7 +111,6 @@ export type Database = {
           impact: string
           organization_id: string
           resolved_at?: string | null
-          status: string
           title: string
           updated_at?: string | null
         }
@@ -124,7 +122,6 @@ export type Database = {
           impact?: string
           organization_id?: string
           resolved_at?: string | null
-          status?: string
           title?: string
           updated_at?: string | null
         }
@@ -190,6 +187,45 @@ export type Database = {
           },
         ]
       }
+      maintenance_updates: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          message: string
+          scheduled_maintenance_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          message: string
+          scheduled_maintenance_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          message?: string
+          scheduled_maintenance_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_updates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_updates_scheduled_maintenance_id_fkey"
+            columns: ["scheduled_maintenance_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_maintenances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string | null
@@ -233,10 +269,10 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          impact: string | null
           organization_id: string
           scheduled_end_time: string
           scheduled_start_time: string
-          status: string
           title: string
           updated_at: string | null
         }
@@ -247,10 +283,10 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          impact?: string | null
           organization_id: string
           scheduled_end_time: string
           scheduled_start_time: string
-          status: string
           title: string
           updated_at?: string | null
         }
@@ -261,10 +297,10 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          impact?: string | null
           organization_id?: string
           scheduled_end_time?: string
           scheduled_start_time?: string
-          status?: string
           title?: string
           updated_at?: string | null
         }
@@ -390,14 +426,17 @@ export type Database = {
       }
       services_scheduled_maintenances: {
         Row: {
+          auto_change_status: boolean | null
           scheduled_maintenance_id: string
           service_id: string
         }
         Insert: {
+          auto_change_status?: boolean | null
           scheduled_maintenance_id: string
           service_id: string
         }
         Update: {
+          auto_change_status?: boolean | null
           scheduled_maintenance_id?: string
           service_id?: string
         }
@@ -500,7 +539,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_latest_incident_status: {
+        Args: {
+          incident_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
