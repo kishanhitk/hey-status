@@ -228,6 +228,7 @@ export default function PublicStatusPage() {
             `
             )
             .eq("id", payload.new.incident_id)
+            .order("created_at", { ascending: false })
             .single();
 
           if (error) {
