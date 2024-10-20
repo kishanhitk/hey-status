@@ -479,16 +479,3 @@ CREATE OR REPLACE TRIGGER "on_auth_user_created" AFTER INSERT ON "auth"."users" 
 
 
 
--- Add this to the end of your migration file
-
--- Rename columns
-ALTER TABLE public.scheduled_maintenances
-RENAME COLUMN scheduled_start_time TO start_time;
-
-ALTER TABLE public.scheduled_maintenances
-RENAME COLUMN scheduled_end_time TO end_time;
-
--- Drop columns
-ALTER TABLE public.scheduled_maintenances
-DROP COLUMN actual_start_time,
-DROP COLUMN actual_end_time;
