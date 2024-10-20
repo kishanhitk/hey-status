@@ -8,7 +8,8 @@ import {
   ExternalLink,
   Clock,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, isBefore, isAfter } from "date-fns";
+import { MAINTENANCE_IMPACT_LABELS, MaintenanceImpact } from "~/lib/constants";
 
 type Service = {
   id: string;
@@ -119,18 +120,19 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     return acc;
   }, {} as Record<string, number>);
 
-  // Fetch scheduled maintenances
+  // Update the scheduled maintenances fetch
   const { data: scheduledMaintenances } = await supabase
     .from("scheduled_maintenances")
     .select(
       `
       *,
-      services_scheduled_maintenances(service:services(*))
+      services_scheduled_maintenances(services(*)),
+      maintenance_updates(*)
     `
     )
     .eq("organization_id", organization.id)
-    .gte("scheduled_end_time", new Date().toISOString())
-    .order("scheduled_start_time", { ascending: true });
+    .gte("end_time", new Date().toISOString())
+    .order("start_time", { ascending: true });
 
   return json({
     organization,
@@ -190,6 +192,33 @@ function getIncidentStatusColor(status: IncidentStatus): string {
       return "text-orange-600";
     case "monitoring":
       return "text-blue-600";
+    default:
+      return "text-gray-600";
+  }
+}
+
+function getMaintenanceStatus(maintenance: any) {
+  const now = new Date();
+  const startTime = new Date(maintenance.start_time);
+  const endTime = new Date(maintenance.end_time);
+
+  if (isBefore(now, startTime)) {
+    return "Scheduled";
+  } else if (isAfter(now, startTime) && isBefore(now, endTime)) {
+    return "In Progress";
+  } else {
+    return "Completed";
+  }
+}
+
+function getMaintenanceStatusColor(status: string): string {
+  switch (status) {
+    case "Scheduled":
+      return "text-blue-600";
+    case "In Progress":
+      return "text-orange-600";
+    case "Completed":
+      return "text-green-600";
     default:
       return "text-gray-600";
   }
@@ -290,26 +319,58 @@ export default function PublicStatusPage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
                 Scheduled Maintenance
               </h2>
-              <div className="space-y-6">
-                {scheduledMaintenances.map((maintenance) => (
-                  <div key={maintenance.id}>
-                    <div className="flex items-center mb-2">
-                      <Clock className="h-5 w-5 text-blue-500" />
-                      <span className="ml-2 text-lg font-medium text-gray-900">
+              <div className="space-y-8">
+                {scheduledMaintenances.map((maintenance) => {
+                  const status = getMaintenanceStatus(maintenance);
+                  return (
+                    <div key={maintenance.id} className="border-b pb-6">
+                      <h3
+                        className={`text-xl font-semibold mb-2 ${getMaintenanceStatusColor(
+                          status
+                        )}`}
+                      >
                         {maintenance.title}
-                      </span>
+                      </h3>
+                      <div className="space-y-2 mb-4">
+                        <p className="text-gray-600">Status: {status}</p>
+                        <p className="text-gray-600">
+                          Impact:{" "}
+                          {
+                            MAINTENANCE_IMPACT_LABELS[
+                              maintenance.impact as MaintenanceImpact
+                            ]
+                          }
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Scheduled: {formatDateTime(maintenance.start_time)} -{" "}
+                          {formatDateTime(maintenance.end_time)}
+                        </p>
+                        <p className="text-gray-600">
+                          Affected Services:{" "}
+                          {maintenance.services_scheduled_maintenances
+                            .map((ssm: any) => ssm.services.name)
+                            .join(", ")}
+                        </p>
+                      </div>
+                      <div className="space-y-4">
+                        {maintenance.maintenance_updates
+                          .sort(
+                            (a: any, b: any) =>
+                              new Date(b.created_at).getTime() -
+                              new Date(a.created_at).getTime()
+                          )
+                          .map((update: any) => (
+                            <div key={update.id}>
+                              <div className="text-sm text-gray-500">
+                                {formatUTCDate(update.created_at)}
+                              </div>
+                              <p className="text-gray-700">{update.message}</p>
+                            </div>
+                          ))}
+                      </div>
                     </div>
-                    <p className="text-gray-600 mb-1">
-                      Status:{" "}
-                      {maintenance.status.charAt(0).toUpperCase() +
-                        maintenance.status.slice(1)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Scheduled: {formatDate(maintenance.scheduled_start_time)}{" "}
-                      - {formatDate(maintenance.scheduled_end_time)}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -327,6 +388,15 @@ export default function PublicStatusPage() {
                   >
                     {incident.title}
                   </h3>
+                  <div className="space-y-2 mb-4">
+                    <p className="text-gray-600">Impact: {incident.impact}</p>
+                    <p className="text-gray-600">
+                      Affected Services:{" "}
+                      {incident.services_incidents
+                        .map((si: any) => si.service.name)
+                        .join(", ")}
+                    </p>
+                  </div>
                   <div className="space-y-4">
                     {incident.incident_updates
                       .sort(
