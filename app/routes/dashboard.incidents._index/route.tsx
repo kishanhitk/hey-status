@@ -2,7 +2,7 @@ import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
 import { Link, useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import {
   Table,
@@ -12,13 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { useUser } from "~/hooks/useUser";
-import { formatDistanceToNow, format } from "date-fns";
 import {
   INCIDENT_IMPACT_LABELS,
   INCIDENT_STATUS_LABELS,
+  IncidentImpact,
+  IncidentStatus,
 } from "~/lib/constants";
 import { Loader2 } from "lucide-react";
+import { formatLocalDateTime } from "~/utils/dateTime";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
@@ -125,21 +126,19 @@ export default function Incidents() {
                 </TableCell>
                 <TableCell>
                   <div>
-                    {INCIDENT_STATUS_LABELS[incident.currentStatus]}
+                    {
+                      INCIDENT_STATUS_LABELS[
+                        incident.currentStatus as IncidentStatus
+                      ]
+                    }
                     <div className="text-sm text-gray-500">
-                      Last update:{" "}
-                      {incident.lastUpdateTime
-                        ? formatDistanceToNow(
-                            new Date(incident.lastUpdateTime),
-                            {
-                              addSuffix: true,
-                            }
-                          )
-                        : "N/A"}
+                      Updated: {formatLocalDateTime(incident.lastUpdateTime)}
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>{INCIDENT_IMPACT_LABELS[incident.impact]}</TableCell>
+                <TableCell>
+                  {INCIDENT_IMPACT_LABELS[incident.impact as IncidentImpact]}
+                </TableCell>
                 <TableCell>
                   {incident.serviceIds
                     .map(
@@ -149,9 +148,7 @@ export default function Incidents() {
                     .join(", ")}
                 </TableCell>
                 <TableCell>
-                  {incident.created_at
-                    ? format(new Date(incident.created_at), "MMM d, yyyy HH:mm")
-                    : "N/A"}
+                  {formatLocalDateTime(incident.created_at)}
                 </TableCell>
               </TableRow>
             ))}

@@ -20,7 +20,7 @@ import {
   MAINTENANCE_STATUS_LABELS,
   MaintenanceImpact,
 } from "~/lib/constants";
-import { format } from "date-fns";
+import { formatLocalDateTime } from "~/utils/dateTime";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
@@ -70,12 +70,16 @@ export default function Maintenance() {
     maintenance: Database["public"]["Tables"]["scheduled_maintenances"]["Row"]
   ) => {
     const now = new Date();
-    const startTime = new Date(maintenance.start_time);
-    const endTime = new Date(maintenance.end_time);
+    const startTime = maintenance.start_time
+      ? new Date(maintenance.start_time)
+      : null;
+    const endTime = maintenance.end_time
+      ? new Date(maintenance.end_time)
+      : null;
 
-    if (now < startTime) {
+    if (!startTime || now < startTime) {
       return MAINTENANCE_STATUS_LABELS[MAINTENANCE_STATUS.SCHEDULED];
-    } else if (now >= startTime && now < endTime) {
+    } else if (startTime && (!endTime || now < endTime)) {
       return MAINTENANCE_STATUS_LABELS[MAINTENANCE_STATUS.IN_PROGRESS];
     } else {
       return MAINTENANCE_STATUS_LABELS[MAINTENANCE_STATUS.COMPLETED];
@@ -122,17 +126,14 @@ export default function Maintenance() {
                 <TableCell>
                   {getMaintenanceStatus(maintenance)}
                   <p className="text-xs text-muted-foreground">
-                    Updated:{" "}
-                    {maintenance.updated_at
-                      ? format(maintenance.updated_at, "PPP hh:mm:ss a")
-                      : ""}
+                    Updated: {formatLocalDateTime(maintenance.updated_at)}
                   </p>
                 </TableCell>
                 <TableCell>
-                  {format(maintenance.start_time, "PPP hh:mm:ss a")}
+                  {formatLocalDateTime(maintenance.start_time)}
                 </TableCell>
                 <TableCell>
-                  {format(maintenance.end_time, "PPP hh:mm:ss a")}
+                  {formatLocalDateTime(maintenance.end_time)}
                 </TableCell>
                 <TableCell>
                   {
