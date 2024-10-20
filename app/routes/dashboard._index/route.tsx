@@ -1,14 +1,17 @@
 import { LoaderFunctionArgs, json } from "@remix-run/cloudflare";
-import { useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Database } from "~/types/supabase";
-import { SidebarTrigger } from "~/components/ui/sidebar";
-import { CheckCircle, AlertTriangle, XCircle } from "lucide-react";
-import { Separator } from "~/components/ui/separator";
+import { CheckCircle, AlertTriangle, XCircle, Clock } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { SERVICE_STATUS_LABELS } from "~/lib/constants";
 
 type Service = Database["public"]["Tables"]["services"]["Row"];
+type Incident = Database["public"]["Tables"]["incidents"]["Row"];
+type Maintenance =
+  Database["public"]["Tables"]["scheduled_maintenances"]["Row"];
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const env = context.cloudflare.env;
@@ -33,7 +36,19 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     .order("updated_at", { ascending: false })
     .limit(5);
 
-  return json({ services, activeIncidents, recentIncidents });
+  const { data: upcomingMaintenances } = await supabase
+    .from("scheduled_maintenances")
+    .select("*")
+    .gt("start_time", new Date().toISOString())
+    .order("start_time")
+    .limit(5);
+
+  return json({
+    services,
+    activeIncidents,
+    recentIncidents,
+    upcomingMaintenances,
+  });
 }
 
 function getStatusIcon(status: Service["current_status"]) {
@@ -49,7 +64,7 @@ function getStatusIcon(status: Service["current_status"]) {
 }
 
 export default function DashboardIndex() {
-  const { services, activeIncidents, recentIncidents } =
+  const { services, activeIncidents, recentIncidents, upcomingMaintenances } =
     useLoaderData<typeof loader>();
 
   const allOperational = services?.every(
@@ -58,13 +73,14 @@ export default function DashboardIndex() {
 
   return (
     <div className="px-6">
-      <header className="flex h-16 shrink-0 items-center transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-        <div className="flex items-center gap-2 h-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="h-full" />
-          <h1 className="text-xl font-semibold">Dashboard</h1>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-1 max-w-lg">
+            Overview of your services and incidents.
+          </p>
         </div>
-      </header>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
@@ -94,7 +110,7 @@ export default function DashboardIndex() {
           <CardContent>
             {activeIncidents && activeIncidents.length > 0 ? (
               <ul className="space-y-2">
-                {activeIncidents.map((incident) => (
+                {activeIncidents.map((incident: Incident) => (
                   <li key={incident.id} className="flex items-center space-x-2">
                     <AlertTriangle className="h-5 w-5 text-yellow-500" />
                     <span>{incident.title}</span>
@@ -109,15 +125,27 @@ export default function DashboardIndex() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle>Upcoming Maintenance</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <Button asChild className="w-full">
-              <a href="/dashboard/incidents/new">Report New Incident</a>
-            </Button>
-            <Button asChild variant="outline" className="w-full">
-              <a href="/dashboard/maintenance/new">Schedule Maintenance</a>
-            </Button>
+          <CardContent>
+            {upcomingMaintenances && upcomingMaintenances.length > 0 ? (
+              <ul className="space-y-2">
+                {upcomingMaintenances.map((maintenance: Maintenance) => (
+                  <li
+                    key={maintenance.id}
+                    className="flex items-center space-x-2"
+                  >
+                    <Clock className="h-5 w-5 text-blue-500" />
+                    <span>{maintenance.title}</span>
+                    <span className="text-sm text-gray-500">
+                      {formatDistanceToNow(new Date(maintenance.start_time))}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No upcoming maintenance</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -135,7 +163,12 @@ export default function DashboardIndex() {
                   className="flex items-center justify-between"
                 >
                   <span>{service.name}</span>
-                  {getStatusIcon(service.current_status)}
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm">
+                      {SERVICE_STATUS_LABELS[service.current_status]}
+                    </span>
+                    {getStatusIcon(service.current_status)}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -149,10 +182,13 @@ export default function DashboardIndex() {
           <CardContent>
             {recentIncidents && recentIncidents.length > 0 ? (
               <ul className="space-y-2">
-                {recentIncidents.map((incident) => (
+                {recentIncidents.map((incident: Incident) => (
                   <li key={incident.id} className="flex items-center space-x-2">
                     <CheckCircle className="h-5 w-5 text-green-500" />
                     <span>{incident.title}</span>
+                    <span className="text-sm text-gray-500">
+                      {formatDistanceToNow(new Date(incident.updated_at))} ago
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -161,6 +197,24 @@ export default function DashboardIndex() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      <div className="mt-8 flex justify-end space-x-4">
+        <Button asChild variant="outline">
+          <Link prefetch="intent" to="/dashboard/services">
+            Manage Services
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link prefetch="intent" to="/dashboard/maintenance/new">
+            Schedule Maintenance
+          </Link>
+        </Button>
+        <Button asChild>
+          <Link prefetch="intent" to="/dashboard/incidents/new">
+            Report New Incident
+          </Link>
+        </Button>
       </div>
     </div>
   );
