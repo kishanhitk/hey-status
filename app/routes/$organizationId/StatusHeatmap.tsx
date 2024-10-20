@@ -7,20 +7,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { Database } from "~/types/supabase";
 
-type Service = {
-  id: string;
-  name: string;
-  // Add other properties as needed
-};
-
-type StatusLog = {
-  service_id: string;
-  status: string;
-  created_at: string;
-};
-
-export const StatusHeatmap = ({ services }: { services: Service[] }) => {
+export const StatusHeatmap = ({
+  services,
+}: {
+  services: Database["public"]["Tables"]["services"]["Row"][];
+}) => {
   const { organizationId } = useParams();
   const supabase = useSupabase();
 
@@ -29,6 +22,10 @@ export const StatusHeatmap = ({ services }: { services: Service[] }) => {
     queryFn: async () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      if (!organizationId) {
+        return null;
+      }
 
       const { data, error } = await supabase
         .from("service_status_logs")
@@ -48,7 +45,7 @@ export const StatusHeatmap = ({ services }: { services: Service[] }) => {
         console.error("Error fetching status logs:", error);
         throw error;
       }
-      return data as StatusLog[];
+      return data;
     },
   });
 

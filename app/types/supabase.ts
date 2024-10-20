@@ -302,24 +302,21 @@ export type Database = {
       }
       service_status_logs: {
         Row: {
-          ended_at: string | null
+          created_at: string | null
           id: string
           service_id: string
-          started_at: string
           status: string
         }
         Insert: {
-          ended_at?: string | null
+          created_at?: string | null
           id?: string
           service_id: string
-          started_at: string
           status: string
         }
         Update: {
-          ended_at?: string | null
+          created_at?: string | null
           id?: string
           service_id?: string
-          started_at?: string
           status?: string
         }
         Relationships: [
