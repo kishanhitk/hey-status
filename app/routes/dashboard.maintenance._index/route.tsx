@@ -12,8 +12,15 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { Edit2 } from "lucide-react";
+
 import { Database } from "~/types/supabase";
+import {
+  MAINTENANCE_IMPACT_LABELS,
+  MAINTENANCE_STATUS,
+  MAINTENANCE_STATUS_LABELS,
+  MaintenanceImpact,
+} from "~/lib/constants";
+import { format } from "date-fns";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
@@ -22,31 +29,21 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     .select(
       `
       *,
-      services_scheduled_maintenances(service_id)
+      services_scheduled_maintenances(services(id, name))
     `
     )
     .order("start_time", { ascending: true });
 
-  const { data: services, error: servicesError } = await supabase
-    .from("services")
-    .select("id, name");
-
-  if (maintenancesError || servicesError) {
+  if (maintenancesError) {
+    console.error(maintenancesError);
     throw new Error("Failed to fetch data");
   }
 
-  const formattedMaintenances = maintenances.map((maintenance) => ({
-    ...maintenance,
-    serviceIds: maintenance.services_scheduled_maintenances.map(
-      (ssm) => ssm.service_id
-    ),
-  }));
-
-  return json({ initialMaintenances: formattedMaintenances, services });
+  return json({ initialMaintenances: maintenances });
 }
 
 export default function Maintenance() {
-  const { initialMaintenances, services } = useLoaderData<typeof loader>();
+  const { initialMaintenances } = useLoaderData<typeof loader>();
   const supabase = useSupabase();
 
   const { data: maintenances } = useQuery({
@@ -57,20 +54,16 @@ export default function Maintenance() {
         .select(
           `
           *,
-          services_scheduled_maintenances(service_id)
+          services_scheduled_maintenances(services(id, name))
         `
         )
         .order("start_time", { ascending: true });
 
       if (error) throw error;
-      return data.map((maintenance) => ({
-        ...maintenance,
-        serviceIds: maintenance.services_scheduled_maintenances.map(
-          (ssm) => ssm.service_id
-        ),
-      }));
+      return data;
     },
     initialData: initialMaintenances,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const getMaintenanceStatus = (
@@ -81,11 +74,11 @@ export default function Maintenance() {
     const endTime = new Date(maintenance.end_time);
 
     if (now < startTime) {
-      return "Scheduled";
+      return MAINTENANCE_STATUS_LABELS[MAINTENANCE_STATUS.SCHEDULED];
     } else if (now >= startTime && now < endTime) {
-      return "In Progress";
+      return MAINTENANCE_STATUS_LABELS[MAINTENANCE_STATUS.IN_PROGRESS];
     } else {
-      return "Completed";
+      return MAINTENANCE_STATUS_LABELS[MAINTENANCE_STATUS.COMPLETED];
     }
   };
 
@@ -113,13 +106,12 @@ export default function Maintenance() {
               <TableHead>End Time</TableHead>
               <TableHead>Impact</TableHead>
               <TableHead>Affected Services</TableHead>
-              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {maintenances?.map((maintenance) => (
               <TableRow key={maintenance.id}>
-                <TableCell className="underline">
+                <TableCell className="underline font-semibold">
                   <Link
                     to={`/dashboard/maintenance/${maintenance.id}`}
                     prefetch="intent"
@@ -127,28 +119,32 @@ export default function Maintenance() {
                     {maintenance.title}
                   </Link>
                 </TableCell>
-                <TableCell>{getMaintenanceStatus(maintenance)}</TableCell>
                 <TableCell>
-                  {new Date(maintenance.start_time).toLocaleString()}
+                  {getMaintenanceStatus(maintenance)}
+                  <p className="text-xs text-muted-foreground">
+                    Updated:{" "}
+                    {maintenance.updated_at
+                      ? format(maintenance.updated_at, "PPP hh:mm:ss a")
+                      : ""}
+                  </p>
                 </TableCell>
                 <TableCell>
-                  {new Date(maintenance.end_time).toLocaleString()}
-                </TableCell>
-                <TableCell>{maintenance.impact}</TableCell>
-                <TableCell>
-                  {maintenance.serviceIds
-                    .map(
-                      (serviceId) =>
-                        services.find((s) => s.id === serviceId)?.name
-                    )
-                    .join(", ")}
+                  {format(maintenance.start_time, "PPP hh:mm:ss a")}
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" className="mr-2" asChild>
-                    <Link to={`/dashboard/maintenance/${maintenance.id}`}>
-                      <Edit2 />
-                    </Link>
-                  </Button>
+                  {format(maintenance.end_time, "PPP hh:mm:ss a")}
+                </TableCell>
+                <TableCell>
+                  {
+                    MAINTENANCE_IMPACT_LABELS[
+                      maintenance.impact as MaintenanceImpact
+                    ]
+                  }
+                </TableCell>
+                <TableCell>
+                  {maintenance.services_scheduled_maintenances
+                    .map((ssm) => ssm.services?.name)
+                    ?.join(", ")}
                 </TableCell>
               </TableRow>
             ))}
