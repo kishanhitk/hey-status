@@ -1,8 +1,6 @@
 -- Add new columns to scheduled_maintenances table
 ALTER TABLE scheduled_maintenances
-ADD COLUMN impact TEXT CHECK (impact IN ('none', 'minor', 'major', 'critical')),
-ADD COLUMN actual_start_time TIMESTAMP WITH TIME ZONE,
-ADD COLUMN actual_end_time TIMESTAMP WITH TIME ZONE;
+ADD COLUMN impact TEXT CHECK (impact IN ('none', 'minor', 'major', 'critical'));
 
 -- Remove the status column from scheduled_maintenances table
 ALTER TABLE scheduled_maintenances
