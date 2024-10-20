@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/table";
 import { toast } from "~/hooks/use-toast";
 import { useUser } from "~/hooks/useUser";
+import { Edit2 } from "lucide-react";
 
 type Maintenance = {
   id: string;
@@ -165,18 +166,10 @@ export default function Maintenance() {
                     .join(", ")}
                 </TableCell>
                 <TableCell>
-                  <Button variant="outline" size="sm" className="mr-2" asChild>
+                  <Button variant="ghost" size="icon" className="mr-2" asChild>
                     <Link to={`/dashboard/maintenance/${maintenance.id}`}>
-                      Edit
+                      <Edit2 />
                     </Link>
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(maintenance.id)}
-                    disabled={deleteMaintenance.isPending}
-                  >
-                    {deleteMaintenance.isPending ? "Deleting..." : "Delete"}
                   </Button>
                 </TableCell>
               </TableRow>

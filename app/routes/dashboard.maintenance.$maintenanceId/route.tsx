@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import { toast } from "~/hooks/use-toast";
 import { useUser } from "~/hooks/useUser";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow, format, isBefore, isAfter } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -58,6 +58,17 @@ import {
 } from "~/components/ui/popover";
 import { Calendar } from "~/components/ui/calendar";
 import { cn } from "~/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/components/ui/alert-dialog";
 
 export async function loader({ params, request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
@@ -86,15 +97,19 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
   return json({ maintenance, services });
 }
 
-const maintenanceSchema = z.object({
-  title: z.string().min(2, "Title must be at least 2 characters long"),
-  description: z.string().optional(),
-  impact: z.enum(["none", "minor", "major", "critical"]),
-  scheduled_start_time: z.date(),
-  scheduled_end_time: z.date(),
-  serviceIds: z.array(z.string()),
-  autoChangeStatus: z.boolean(),
-});
+const maintenanceSchema = z
+  .object({
+    title: z.string().min(2, "Title must be at least 2 characters long"),
+    description: z.string().optional(),
+    impact: z.enum(["none", "minor", "major", "critical"]),
+    scheduled_start_time: z.date(),
+    scheduled_end_time: z.date(),
+    serviceIds: z.array(z.string()),
+  })
+  .refine((data) => data.scheduled_end_time > data.scheduled_start_time, {
+    message: "End time must be after start time",
+    path: ["scheduled_end_time"],
+  });
 
 const updateSchema = z.object({
   message: z.string().min(1, "Message is required"),
@@ -108,6 +123,8 @@ export default function MaintenanceDetails() {
   const { user } = useUser();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const [isStartDialogOpen, setIsStartDialogOpen] = useState(false);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
 
   const {
     data: maintenanceData,
@@ -144,14 +161,11 @@ export default function MaintenanceDetails() {
         : new Date(),
       scheduled_end_time: maintenanceData?.scheduled_end_time
         ? new Date(maintenanceData.scheduled_end_time)
-        : new Date(),
+        : new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now if not set
       serviceIds:
         maintenanceData?.services_scheduled_maintenances?.map(
           (ssm) => ssm.service_id
         ) || [],
-      autoChangeStatus:
-        maintenanceData?.services_scheduled_maintenances?.[0]
-          ?.auto_change_status || false,
     },
   });
 
@@ -249,7 +263,6 @@ export default function MaintenanceDetails() {
       const { data, error } = await supabase
         .from("scheduled_maintenances")
         .update({
-          status: MAINTENANCE_STATUS.IN_PROGRESS,
           actual_start_time: new Date().toISOString(),
         })
         .eq("id", maintenanceId)
@@ -257,23 +270,6 @@ export default function MaintenanceDetails() {
         .single();
 
       if (error) throw error;
-
-      // Update service statuses if auto_change_status is true
-      if (
-        maintenanceData.services_scheduled_maintenances.some(
-          (ssm) => ssm.auto_change_status
-        )
-      ) {
-        const newStatus = getServiceStatus(
-          MAINTENANCE_STATUS.IN_PROGRESS,
-          maintenanceData.impact
-        );
-        await updateServiceStatuses(
-          maintenanceData.services_scheduled_maintenances,
-          newStatus
-        );
-      }
-
       return data;
     },
     onSuccess: () => {
@@ -296,7 +292,6 @@ export default function MaintenanceDetails() {
       const { data, error } = await supabase
         .from("scheduled_maintenances")
         .update({
-          status: MAINTENANCE_STATUS.COMPLETED,
           actual_end_time: new Date().toISOString(),
         })
         .eq("id", maintenanceId)
@@ -304,19 +299,6 @@ export default function MaintenanceDetails() {
         .single();
 
       if (error) throw error;
-
-      // Update service statuses if auto_change_status is true
-      if (
-        maintenanceData.services_scheduled_maintenances.some(
-          (ssm) => ssm.auto_change_status
-        )
-      ) {
-        await updateServiceStatuses(
-          maintenanceData.services_scheduled_maintenances,
-          SERVICE_STATUS.OPERATIONAL
-        );
-      }
-
       return data;
     },
     onSuccess: () => {
@@ -336,10 +318,28 @@ export default function MaintenanceDetails() {
 
   const deleteMaintenanceMutation = useMutation({
     mutationFn: async () => {
+      // First, delete the related records in services_scheduled_maintenances
+      const { error: linkError } = await supabase
+        .from("services_scheduled_maintenances")
+        .delete()
+        .eq("scheduled_maintenance_id", maintenanceId);
+
+      if (linkError) throw linkError;
+
+      // Then, delete the maintenance updates
+      const { error: updateError } = await supabase
+        .from("maintenance_updates")
+        .delete()
+        .eq("scheduled_maintenance_id", maintenanceId);
+
+      if (updateError) throw updateError;
+
+      // Finally, delete the maintenance itself
       const { error } = await supabase
         .from("scheduled_maintenances")
         .delete()
         .eq("id", maintenanceId);
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -358,7 +358,6 @@ export default function MaintenanceDetails() {
 
   const handleDelete = () => {
     deleteMaintenanceMutation.mutate();
-    setIsDeleteDialogOpen(false);
   };
 
   const handleMaintenanceSubmit = (
@@ -373,10 +372,34 @@ export default function MaintenanceDetails() {
 
   const handleStartMaintenance = () => {
     startMaintenanceMutation.mutate();
+    setIsStartDialogOpen(false);
   };
 
   const handleCompleteMaintenance = () => {
     completeMaintenanceMutation.mutate();
+    setIsCompleteDialogOpen(false);
+  };
+
+  const getMaintenanceStatus = (maintenance) => {
+    const now = new Date();
+    const startTime = new Date(
+      maintenance.actual_start_time || maintenance.scheduled_start_time
+    );
+    const endTime = new Date(
+      maintenance.actual_end_time || maintenance.scheduled_end_time
+    );
+
+    if (maintenance.actual_end_time) {
+      return "Completed";
+    } else if (maintenance.actual_start_time) {
+      return now > endTime ? "Completed" : "In Progress";
+    } else if (now < startTime) {
+      return "Scheduled";
+    } else if (now >= startTime && now <= endTime) {
+      return "In Progress";
+    } else {
+      return "Completed";
+    }
   };
 
   if (isLoading) {
@@ -402,6 +425,9 @@ export default function MaintenanceDetails() {
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-8">Maintenance Details</h1>
+      <div className="mb-4">
+        <strong>Status:</strong> {getMaintenanceStatus(maintenanceData)}
+      </div>
 
       <div className="flex">
         <div className="w-full">
@@ -607,30 +633,6 @@ export default function MaintenanceDetails() {
                 )}
               />
 
-              <FormField
-                control={maintenanceForm.control}
-                name="autoChangeStatus"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        Automatically change status of affected services
-                      </FormLabel>
-                      <FormDescription>
-                        This will update the status of the selected services
-                        when the maintenance starts and ends.
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
               <Button
                 type="submit"
                 disabled={updateMaintenanceMutation.isPending}
@@ -691,107 +693,110 @@ export default function MaintenanceDetails() {
           <Separator className="my-8" />
 
           <div className="flex space-x-4">
-            {maintenanceData.status === MAINTENANCE_STATUS.SCHEDULED && (
-              <Button
-                onClick={handleStartMaintenance}
-                disabled={startMaintenanceMutation.isPending}
+            {getMaintenanceStatus(maintenanceData) === "Scheduled" && (
+              <Dialog
+                open={isStartDialogOpen}
+                onOpenChange={setIsStartDialogOpen}
               >
-                {startMaintenanceMutation.isPending
-                  ? "Starting..."
-                  : "Start Maintenance"}
-              </Button>
+                <DialogTrigger asChild>
+                  <Button>Start Maintenance</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Start Maintenance</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to start this maintenance now? This
+                      will set the actual start time to the current time.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsStartDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleStartMaintenance}>
+                      Start Maintenance
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             )}
-            {maintenanceData.status === MAINTENANCE_STATUS.IN_PROGRESS && (
-              <Button
-                onClick={handleCompleteMaintenance}
-                disabled={completeMaintenanceMutation.isPending}
+            {getMaintenanceStatus(maintenanceData) === "In Progress" && (
+              <Dialog
+                open={isCompleteDialogOpen}
+                onOpenChange={setIsCompleteDialogOpen}
               >
-                {completeMaintenanceMutation.isPending
-                  ? "Completing..."
-                  : "Complete Maintenance"}
-              </Button>
+                <DialogTrigger asChild>
+                  <Button>Complete Maintenance</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Complete Maintenance</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to complete this maintenance now?
+                      This will set the actual end time to the current time.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsCompleteDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleCompleteMaintenance}>
+                      Complete Maintenance
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             )}
           </div>
 
           <Separator className="my-8" />
 
-          <Dialog
+          <AlertDialog
             open={isDeleteDialogOpen}
             onOpenChange={setIsDeleteDialogOpen}
           >
-            <DialogTrigger asChild>
+            <AlertDialogTrigger asChild>
               <Button
                 variant="outline"
                 className="w-fit border-red-500 text-red-500 hover:bg-red-500 hover:text-white ml-auto"
               >
                 Delete Maintenance
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  Are you sure you want to delete this maintenance?
-                </DialogTitle>
-                <DialogDescription>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
                   This action cannot be undone. This will permanently delete the
                   maintenance and all associated updates.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsDeleteDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
                   onClick={handleDelete}
-                  disabled={deleteMaintenanceMutation.isPending}
+                  className="bg-red-500 hover:bg-red-600"
                 >
-                  {deleteMaintenanceMutation.isPending
-                    ? "Deleting..."
-                    : "Delete"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                  {deleteMaintenanceMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Deleting
+                    </>
+                  ) : (
+                    "Delete"
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>
   );
-}
-
-// Helper function to determine service status based on maintenance status and impact
-function getServiceStatus(
-  maintenanceStatus: string,
-  maintenanceImpact: string
-) {
-  if (maintenanceStatus === MAINTENANCE_STATUS.COMPLETED) {
-    return SERVICE_STATUS.OPERATIONAL;
-  }
-
-  switch (maintenanceImpact) {
-    case MAINTENANCE_IMPACT.CRITICAL:
-      return SERVICE_STATUS.MAJOR_OUTAGE;
-    case MAINTENANCE_IMPACT.MAJOR:
-      return SERVICE_STATUS.PARTIAL_OUTAGE;
-    case MAINTENANCE_IMPACT.MINOR:
-      return SERVICE_STATUS.DEGRADED_PERFORMANCE;
-    default:
-      return SERVICE_STATUS.OPERATIONAL;
-  }
-}
-
-// Helper function to update service statuses
-async function updateServiceStatuses(services, newStatus) {
-  const supabase = useSupabase();
-  for (const service of services) {
-    if (service.auto_change_status) {
-      await supabase
-        .from("services")
-        .update({ current_status: newStatus })
-        .eq("id", service.service_id);
-    }
-  }
 }

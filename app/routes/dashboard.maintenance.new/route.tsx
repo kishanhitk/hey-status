@@ -54,20 +54,23 @@ type Service = {
   name: string;
 };
 
-const formSchema = z.object({
-  title: z.string().min(2, {
-    message: "Title must be at least 2 characters.",
-  }),
-  description: z.string().optional(),
-  status: z.enum(["scheduled", "in_progress", "completed"]),
-  impact: z.enum(["none", "minor", "major", "critical"]),
-  scheduled_start_time: z.date(),
-  scheduled_end_time: z.date(),
-  serviceIds: z.array(z.string()).min(1, {
-    message: "Please select at least one affected service.",
-  }),
-  autoChangeStatus: z.boolean().default(false),
-});
+const formSchema = z
+  .object({
+    title: z.string().min(2, {
+      message: "Title must be at least 2 characters.",
+    }),
+    description: z.string().optional(),
+    impact: z.enum(["none", "minor", "major", "critical"]),
+    scheduled_start_time: z.date(),
+    scheduled_end_time: z.date(),
+    serviceIds: z.array(z.string()).min(1, {
+      message: "Please select at least one affected service.",
+    }),
+  })
+  .refine((data) => data.scheduled_end_time > data.scheduled_start_time, {
+    message: "End time must be after start time",
+    path: ["scheduled_end_time"],
+  });
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
@@ -93,10 +96,10 @@ export default function NewMaintenance() {
     defaultValues: {
       title: "",
       description: "",
-      status: "scheduled",
       impact: "none",
+      scheduled_start_time: new Date(),
+      scheduled_end_time: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
       serviceIds: [],
-      autoChangeStatus: false,
     },
   });
 
@@ -123,7 +126,6 @@ export default function NewMaintenance() {
         .insert({
           title: values.title,
           description: values.description,
-          status: values.status,
           impact: values.impact,
           scheduled_start_time: values.scheduled_start_time,
           scheduled_end_time: values.scheduled_end_time,
@@ -142,7 +144,6 @@ export default function NewMaintenance() {
             values.serviceIds.map((serviceId) => ({
               scheduled_maintenance_id: data.id,
               service_id: serviceId,
-              auto_change_status: values.autoChangeStatus,
             }))
           );
 
@@ -221,159 +222,6 @@ export default function NewMaintenance() {
 
           <FormField
             control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Status</FormLabel>
-                <FormControl>
-                  <Select {...field}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="scheduled">Scheduled</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="flex gap-4">
-            <FormField
-              control={form.control}
-              name="scheduled_start_time"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel className="text-left">DateTime</FormLabel>
-                  <Popover>
-                    <FormControl>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-[280px] justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? (
-                            format(field.value, "PPP HH:mm:ss")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                    </FormControl>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                      <div className="p-3 border-t border-border">
-                        <TimePickerDemo
-                          setDate={field.onChange}
-                          date={field.value}
-                        />
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="scheduled_end_time"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel className="text-left">
-                    Scheduled End Time
-                  </FormLabel>
-                  <Popover>
-                    <FormControl>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-[280px] justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? (
-                            format(field.value, "PPP HH:mm:ss")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                    </FormControl>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                      <div className="p-3 border-t border-border">
-                        <TimePickerDemo
-                          setDate={field.onChange}
-                          date={field.value}
-                        />
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="serviceIds"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Affected Services</FormLabel>
-                <FormControl>
-                  <MultiSelector
-                    onValuesChange={field.onChange}
-                    values={field.value}
-                    options={services.map((service) => ({
-                      value: service.id,
-                      label: service.name,
-                    }))}
-                  >
-                    <MultiSelectorTrigger>
-                      <MultiSelectorInput placeholder="Select affected services" />
-                    </MultiSelectorTrigger>
-                    <MultiSelectorContent>
-                      <MultiSelectorList>
-                        {services.map((service) => (
-                          <MultiSelectorItem
-                            key={service.id}
-                            value={service.id}
-                          >
-                            {service.name}
-                          </MultiSelectorItem>
-                        ))}
-                      </MultiSelectorList>
-                    </MultiSelectorContent>
-                  </MultiSelector>
-                </FormControl>
-                <FormDescription>
-                  Select the services affected by this maintenance.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="impact"
             render={({ field }) => (
               <FormItem>
@@ -412,24 +260,127 @@ export default function NewMaintenance() {
 
           <FormField
             control={form.control}
-            name="autoChangeStatus"
+            name="scheduled_start_time"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormItem className="flex flex-col">
+                <FormLabel className="text-left">DateTime</FormLabel>
+                <Popover>
+                  <FormControl>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[280px] justify-start text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {field.value ? (
+                          format(field.value, "PPP HH:mm:ss")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                  </FormControl>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      initialFocus
+                    />
+                    <div className="p-3 border-t border-border">
+                      <TimePickerDemo
+                        setDate={field.onChange}
+                        date={field.value}
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="scheduled_end_time"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel className="text-left">Scheduled End Time</FormLabel>
+                <Popover>
+                  <FormControl>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[280px] justify-start text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {field.value ? (
+                          format(field.value, "PPP HH:mm:ss")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                  </FormControl>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      initialFocus
+                    />
+                    <div className="p-3 border-t border-border">
+                      <TimePickerDemo
+                        setDate={field.onChange}
+                        date={field.value}
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="serviceIds"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Affected Services</FormLabel>
                 <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
+                  <MultiSelector
+                    onValuesChange={field.onChange}
+                    values={field.value}
+                    options={services.map((service) => ({
+                      value: service.id,
+                      label: service.name,
+                    }))}
+                  >
+                    <MultiSelectorTrigger>
+                      <MultiSelectorInput placeholder="Select affected services" />
+                    </MultiSelectorTrigger>
+                    <MultiSelectorContent>
+                      <MultiSelectorList>
+                        {services.map((service) => (
+                          <MultiSelectorItem
+                            key={service.id}
+                            value={service.id}
+                          >
+                            {service.name}
+                          </MultiSelectorItem>
+                        ))}
+                      </MultiSelectorList>
+                    </MultiSelectorContent>
+                  </MultiSelector>
                 </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>
-                    Automatically change status of affected services
-                  </FormLabel>
-                  <FormDescription>
-                    This will update the status of the selected services when
-                    the maintenance starts and ends.
-                  </FormDescription>
-                </div>
+                <FormDescription>
+                  Select the services affected by this maintenance.
+                </FormDescription>
+                <FormMessage />
               </FormItem>
             )}
           />
