@@ -132,7 +132,6 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     .gte("scheduled_end_time", new Date().toISOString())
     .order("scheduled_start_time", { ascending: true });
 
-  console.log({ activeIncidents });
   return json({
     organization,
     services: services || [],

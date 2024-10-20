@@ -53,6 +53,8 @@ import {
   INCIDENT_STATUS_LABELS,
   IncidentStatus,
   SERVICE_STATUS,
+  SERVICE_STATUS_LABELS,
+  ServiceStatus,
 } from "~/lib/constants";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
@@ -585,10 +587,14 @@ export default function IncidentDetails() {
                       <FormDescription>
                         This will update the status of the following services to{" "}
                         <strong>
-                          {getServiceStatus(
-                            updateForm.watch("status"),
-                            incidentData.impact
-                          )}
+                          {
+                            SERVICE_STATUS_LABELS[
+                              getServiceStatus(
+                                updateForm.watch("status"),
+                                incidentData.impact
+                              )
+                            ]
+                          }
                         </strong>
                         :{" "}
                         {incidentData.services_incidents
