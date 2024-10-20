@@ -17,3 +17,11 @@ export const formatLocalDateTime = (dateString: string | null) => {
     return "Invalid Date";
   }
 };
+
+export const getUserTimezone = () => {
+  return new Intl.DateTimeFormat("en", { timeZoneName: "longOffset" })
+    .format(new Date())
+    .split(" ")
+    .slice(1)
+    .join(" ");
+};
