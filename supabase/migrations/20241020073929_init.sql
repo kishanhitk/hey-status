@@ -180,7 +180,7 @@ CREATE TABLE IF NOT EXISTS "public"."scheduled_maintenances" (
 ALTER TABLE "public"."scheduled_maintenances" OWNER TO "postgres";
 
 
-ALTER TABLE "public"."service_status_logs" OWNER TO "postgres";
+
 
 
 CREATE TABLE IF NOT EXISTS "public"."services" (
@@ -284,9 +284,6 @@ ALTER TABLE ONLY "public"."scheduled_maintenances"
 
 
 
-ALTER TABLE ONLY "public"."service_status_logs"
-    ADD CONSTRAINT "service_status_logs_pkey" PRIMARY KEY ("id");
-
 
 
 ALTER TABLE ONLY "public"."services_incidents"
@@ -340,7 +337,7 @@ CREATE INDEX "idx_scheduled_maintenances_organization_id" ON "public"."scheduled
 
 
 
-CREATE INDEX "idx_service_status_logs_service_id" ON "public"."service_status_logs" USING "btree" ("service_id");
+
 
 
 
@@ -409,10 +406,6 @@ ALTER TABLE ONLY "public"."scheduled_maintenances"
 ALTER TABLE ONLY "public"."scheduled_maintenances"
     ADD CONSTRAINT "scheduled_maintenances_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id");
 
-
-
-ALTER TABLE ONLY "public"."service_status_logs"
-    ADD CONSTRAINT "service_status_logs_service_id_fkey" FOREIGN KEY ("service_id") REFERENCES "public"."services"("id") ON DELETE CASCADE;
 
 
 
@@ -485,7 +478,7 @@ CREATE TABLE IF NOT EXISTS "public"."service_status_logs" (
 CREATE INDEX "idx_service_status_logs_service_id_created_at" ON "public"."service_status_logs" ("service_id", "created_at");
 
 -- Create a function to log service status changes
-CREATE OR REPLACE FUNCTION log_service_status_change()
+CREATE OR REPLACE FUNCTION "public"."log_service_status_change"()
 RETURNS TRIGGER AS $$
 BEGIN
     IF OLD.current_status IS NULL OR NEW.current_status <> OLD.current_status THEN
@@ -500,7 +493,7 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER log_service_status_change_trigger
 AFTER INSERT OR UPDATE ON public.services
 FOR EACH ROW
-EXECUTE FUNCTION log_service_status_change();
+EXECUTE FUNCTION "public"."log_service_status_change"();
 
 -- Enable real-time for relevant tables
 ALTER PUBLICATION supabase_realtime ADD TABLE public.services;
