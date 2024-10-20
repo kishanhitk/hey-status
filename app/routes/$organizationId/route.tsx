@@ -2,7 +2,8 @@ import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { CheckCircle, AlertTriangle, ExternalLink, Info } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useSupabase } from "~/hooks/useSupabase";
 import {
   INCIDENT_STATUS_ICONS,
   INCIDENT_STATUS_LABELS,
@@ -110,8 +111,159 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
 }
 
 export default function PublicStatusPage() {
-  const { organization, services, incidents, scheduledMaintenances } =
-    useLoaderData<typeof loader>();
+  const initialData = useLoaderData<typeof loader>();
+  const [organization] = useState(initialData.organization);
+  const [services, setServices] = useState(initialData.services);
+  const [incidents, setIncidents] = useState(initialData.incidents);
+  const [scheduledMaintenances, setScheduledMaintenances] = useState(
+    initialData.scheduledMaintenances
+  );
+  const supabase = useSupabase();
+
+  // Enable Realtime updates
+  useEffect(() => {
+    const servicesSubscription = supabase
+      .channel("public:services")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "services" },
+        (payload) => {
+          setServices((currentServices) => {
+            const updatedServices = [...currentServices];
+            const index = updatedServices.findIndex(
+              (s) => s.id === payload.new.id
+            );
+            if (index !== -1) {
+              updatedServices[index] = {
+                ...updatedServices[index],
+                ...payload.new,
+              };
+            } else {
+              updatedServices.push(payload.new as any);
+            }
+            return updatedServices;
+          });
+        }
+      )
+      .subscribe();
+
+    const incidentsSubscription = supabase
+      .channel("public:incidents")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "incidents" },
+        async (payload) => {
+          const { data: updatedIncident, error } = await supabase
+            .from("incidents")
+            .select(
+              `
+              *,
+              services_incidents(service:services(id, name)),
+              incident_updates(id, status, message, created_at)
+            `
+            )
+            .eq("id", payload.new.id)
+            .single();
+
+          if (error) {
+            console.error("Error fetching updated incident:", error);
+            return;
+          }
+
+          setIncidents((currentIncidents) => {
+            const updatedIncidents = [...currentIncidents];
+            const index = updatedIncidents.findIndex(
+              (i) => i.id === updatedIncident.id
+            );
+            if (index !== -1) {
+              updatedIncidents[index] = updatedIncident;
+            } else {
+              updatedIncidents.unshift(updatedIncident);
+            }
+            return updatedIncidents;
+          });
+        }
+      )
+      .subscribe();
+
+    const incidentUpdatesSubscription = supabase
+      .channel("public:incident_updates")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "incident_updates" },
+        async (payload) => {
+          const { data: updatedIncident, error } = await supabase
+            .from("incidents")
+            .select(
+              `
+              *,
+              services_incidents(service:services(id, name)),
+              incident_updates(id, status, message, created_at)
+            `
+            )
+            .eq("id", payload.new.incident_id)
+            .single();
+
+          if (error) {
+            console.error("Error fetching updated incident:", error);
+            return;
+          }
+
+          setIncidents((currentIncidents) => {
+            return currentIncidents.map((incident) =>
+              incident.id === updatedIncident.id ? updatedIncident : incident
+            );
+          });
+        }
+      )
+      .subscribe();
+
+    const scheduledMaintenancesSubscription = supabase
+      .channel("public:scheduled_maintenances")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "scheduled_maintenances" },
+        async (payload) => {
+          const { data: updatedMaintenance, error } = await supabase
+            .from("scheduled_maintenances")
+            .select(
+              `
+              *,
+              services_scheduled_maintenances(services(id, name)),
+              maintenance_updates(*)
+            `
+            )
+            .eq("id", payload.new.id)
+            .single();
+
+          if (error) {
+            console.error("Error fetching updated maintenance:", error);
+            return;
+          }
+
+          setScheduledMaintenances((currentMaintenances) => {
+            const updatedMaintenances = [...currentMaintenances];
+            const index = updatedMaintenances.findIndex(
+              (m) => m.id === updatedMaintenance.id
+            );
+            if (index !== -1) {
+              updatedMaintenances[index] = updatedMaintenance;
+            } else {
+              updatedMaintenances.push(updatedMaintenance);
+            }
+            return updatedMaintenances;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      servicesSubscription.unsubscribe();
+      incidentsSubscription.unsubscribe();
+      incidentUpdatesSubscription.unsubscribe();
+      scheduledMaintenancesSubscription.unsubscribe();
+    };
+  }, [supabase]);
 
   const allOperational = services.every(
     (service) => service.current_status === "operational"

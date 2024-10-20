@@ -501,3 +501,10 @@ CREATE TRIGGER log_service_status_change_trigger
 AFTER INSERT OR UPDATE ON public.services
 FOR EACH ROW
 EXECUTE FUNCTION log_service_status_change();
+
+-- Enable real-time for relevant tables
+ALTER PUBLICATION supabase_realtime ADD TABLE public.services;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.incidents;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.incident_updates;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.scheduled_maintenances;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.maintenance_updates;
