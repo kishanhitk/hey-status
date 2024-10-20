@@ -1,4 +1,4 @@
-import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
+import { json, LoaderFunctionArgs, MetaFunction } from "@remix-run/cloudflare";
 import { Link, useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
@@ -21,6 +21,14 @@ import {
   MaintenanceImpact,
 } from "~/lib/constants";
 import { formatLocalDateTime } from "~/utils/dateTime";
+import { metaGenerator } from "~/utils/metaGenerator";
+
+export const meta: MetaFunction = () => {
+  return metaGenerator({
+    title: "Scheduled Maintenance",
+    description: "View and manage scheduled maintenance for your services.",
+  });
+};
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);

@@ -1,4 +1,4 @@
-import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
+import { json, LoaderFunctionArgs, MetaFunction } from "@remix-run/cloudflare";
 import { Link, useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
@@ -20,6 +20,14 @@ import {
 } from "~/lib/constants";
 import { Loader2 } from "lucide-react";
 import { formatLocalDateTime } from "~/utils/dateTime";
+import { metaGenerator } from "~/utils/metaGenerator";
+
+export const meta: MetaFunction = () => {
+  return metaGenerator({
+    title: "Incidents",
+    description: "View and manage incidents affecting your services.",
+  });
+};
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);

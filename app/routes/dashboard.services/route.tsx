@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
+import { json, LoaderFunctionArgs, MetaFunction } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { metaGenerator } from "~/utils/metaGenerator";
 
 type Service = {
   id: string;
@@ -45,6 +46,13 @@ type Service = {
     | "degraded_performance"
     | "partial_outage"
     | "major_outage";
+};
+
+export const meta: MetaFunction = () => {
+  return metaGenerator({
+    title: "Services",
+    description: "Manage and monitor your services.",
+  });
 };
 
 export async function loader({ request, context }: LoaderFunctionArgs) {

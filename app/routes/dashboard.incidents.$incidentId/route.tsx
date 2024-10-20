@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
+import { json, LoaderFunctionArgs, MetaFunction } from "@remix-run/cloudflare";
 import { useLoaderData, useParams, useNavigate } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
@@ -65,6 +65,20 @@ import {
   MultiSelectorList,
   MultiSelectorItem,
 } from "~/components/ui/multi-select";
+import { metaGenerator } from "~/utils/metaGenerator";
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  if (!data) {
+    return metaGenerator({
+      title: "Incident Not Found",
+      description: "The requested incident could not be found.",
+    });
+  }
+  return metaGenerator({
+    title: `Incident: ${data.incident.title}`,
+    description: `Details and updates for the incident: ${data.incident.title}`,
+  });
+};
 
 export async function loader({ params, request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);

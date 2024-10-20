@@ -3,6 +3,7 @@ import {
   ActionFunctionArgs,
   json,
   redirect,
+  MetaFunction,
 } from "@remix-run/cloudflare";
 import { useLoaderData, useActionData, Form } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
@@ -14,12 +15,20 @@ import { toast } from "~/hooks/use-toast";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { metaGenerator } from "~/utils/metaGenerator";
 
 const updateOrgSchema = z.object({
   name: z
     .string()
     .min(2, "Organization name must be at least 2 characters long"),
 });
+
+export const meta: MetaFunction = () => {
+  return metaGenerator({
+    title: "Settings",
+    description: "Manage your organization settings.",
+  });
+};
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);

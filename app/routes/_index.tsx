@@ -1,9 +1,14 @@
-import { Link } from "@remix-run/react";
+import { Link, MetaFunction } from "@remix-run/react";
 import { Globe, Bell, ArrowRight } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { useUser } from "~/hooks/useUser";
+import { metaGenerator } from "~/utils/metaGenerator";
+
+export const meta: MetaFunction = () => {
+  return metaGenerator({});
+};
 
 export default function Component() {
   const { user } = useUser();

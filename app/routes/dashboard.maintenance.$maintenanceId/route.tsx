@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { json, LoaderFunctionArgs } from "@remix-run/cloudflare";
+import { json, LoaderFunctionArgs, MetaFunction } from "@remix-run/cloudflare";
 import { useLoaderData, useParams, useNavigate } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
@@ -69,6 +69,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
+import { metaGenerator } from "~/utils/metaGenerator";
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  if (!data) {
+    return metaGenerator({
+      title: "Maintenance Not Found",
+      description: "The requested maintenance could not be found.",
+    });
+  }
+  return metaGenerator({
+    title: `Maintenance: ${data.maintenance.title}`,
+    description: `Details and updates for the scheduled maintenance: ${data.maintenance.title}`,
+  });
+};
 
 export async function loader({ params, request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
