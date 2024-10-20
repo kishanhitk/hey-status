@@ -63,7 +63,7 @@ export default function Maintenance() {
       return data;
     },
     initialData: initialMaintenances,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 10,
   });
 
   const getMaintenanceStatus = (
