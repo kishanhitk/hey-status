@@ -3,7 +3,7 @@ import { useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Database } from "~/types/supabase";
-import { formatDistanceToNow, subDays, format } from "date-fns";
+import { formatDistanceToNow, subDays, format, startOfDay } from "date-fns";
 import {
   Bar,
   BarChart,
@@ -21,6 +21,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, env);
 
   const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+  const todayStart = startOfDay(new Date()).toISOString();
 
   const { data: incidentStats } = await supabase
     .from("incidents")
@@ -32,9 +33,11 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     .select("start_time")
     .gte("start_time", thirtyDaysAgo);
 
-  const { data: serviceUptime } = await supabase
-    .from("services")
-    .select("name, current_status");
+  const { data: statusLogs } = await supabase
+    .from("service_status_logs")
+    .select("service_id, status, created_at")
+    .gte("created_at", todayStart)
+    .order("created_at", { ascending: true });
 
   const { data: recentIncidents } = await supabase
     .from("incidents")
@@ -45,7 +48,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   return json({
     incidentStats,
     maintenanceStats,
-    serviceUptime,
+    statusLogs,
     recentIncidents,
   });
 }
@@ -78,8 +81,49 @@ function prepareChartData(incidentStats: any[], maintenanceStats: any[]) {
   return data.reverse();
 }
 
+function calculateTodayDowntime(statusLogs: any[]) {
+  const downtimeByService: Record<string, number> = {};
+  const now = new Date();
+
+  statusLogs.forEach((log, index) => {
+    if (log.status !== "operational") {
+      const startDate = new Date(log.created_at);
+      const endDate =
+        index < statusLogs.length - 1
+          ? new Date(statusLogs[index + 1].created_at)
+          : now;
+
+      const downtimeMinutes = Math.floor(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60)
+      );
+
+      if (!downtimeByService[log.service_id]) {
+        downtimeByService[log.service_id] = 0;
+      }
+      downtimeByService[log.service_id] += downtimeMinutes;
+    }
+  });
+
+  const totalDowntime = Object.values(downtimeByService).reduce(
+    (sum, value) => sum + value,
+    0
+  );
+
+  return totalDowntime;
+}
+
+function formatDowntime(minutes: number) {
+  if (minutes === 0) return "No downtime";
+  if (minutes < 60) return `${minutes} minute${minutes !== 1 ? "s" : ""}`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `${hours} hour${hours !== 1 ? "s" : ""} ${remainingMinutes} minute${
+    remainingMinutes !== 1 ? "s" : ""
+  }`;
+}
+
 export default function Analytics() {
-  const { incidentStats, maintenanceStats, serviceUptime, recentIncidents } =
+  const { incidentStats, maintenanceStats, statusLogs, recentIncidents } =
     useLoaderData<typeof loader>();
 
   const chartData = prepareChartData(
@@ -89,14 +133,7 @@ export default function Analytics() {
 
   const totalIncidents = incidentStats?.length ?? 0;
   const totalMaintenances = maintenanceStats?.length ?? 0;
-  const averageUptime =
-    serviceUptime && serviceUptime.length > 0
-      ? (serviceUptime.filter(
-          (service) => service.current_status === "operational"
-        ).length /
-          serviceUptime.length) *
-        100
-      : 0;
+  const todayDowntime = calculateTodayDowntime(statusLogs || []);
 
   return (
     <div className="px-6">
@@ -130,10 +167,12 @@ export default function Analytics() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Average Uptime</CardTitle>
+            <CardTitle>Today&apos;s Downtime</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{averageUptime.toFixed(2)}%</p>
+            <p className="text-3xl font-bold">
+              {formatDowntime(todayDowntime)}
+            </p>
           </CardContent>
         </Card>
       </div>
