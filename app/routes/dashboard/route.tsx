@@ -6,10 +6,12 @@ import { createServerSupabase } from "~/utils/supabase.server";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { supabase } = createServerSupabase(request, context.cloudflare.env);
-  const { data: user } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    return redirect("/login");
+    throw redirect("/login");
   }
 
   return json({});
