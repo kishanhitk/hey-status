@@ -1,4 +1,4 @@
-import { json, LoaderFunctionArgs, redirect } from "@remix-run/cloudflare";
+import { LoaderFunctionArgs, redirect } from "@remix-run/cloudflare";
 import { createServerSupabase } from "~/utils/supabase.server";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
@@ -24,5 +24,5 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     return redirect("/create-organization");
   }
 
-  return json({ user, userProfile });
+  return redirect("/dashboard");
 }

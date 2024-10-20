@@ -1,22 +1,11 @@
-import { LoaderFunctionArgs, json, redirect } from "@remix-run/cloudflare";
+import { LoaderFunctionArgs, json } from "@remix-run/cloudflare";
 import { useLoaderData, useNavigate, Link } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
 import { useUser } from "~/hooks/useUser";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
 import * as z from "zod";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import {
-  Form as ShadcnForm,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "~/components/ui/form";
 import { toast } from "~/hooks/use-toast";
 import DotPattern from "~/components/ui/dot-pattern";
 import { cn } from "~/lib/utils";
@@ -66,14 +55,6 @@ export default function AcceptInvitation() {
   const supabase = useSupabase();
   const navigate = useNavigate();
   const { user, isLoading: isUserLoading } = useUser();
-
-  const form = useForm<z.infer<typeof acceptInvitationSchema>>({
-    resolver: zodResolver(acceptInvitationSchema),
-    defaultValues: {
-      fullName: "",
-      password: "",
-    },
-  });
 
   const acceptInvitationMutation = useMutation({
     mutationFn: async (values: z.infer<typeof acceptInvitationSchema>) => {
@@ -131,10 +112,6 @@ export default function AcceptInvitation() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof acceptInvitationSchema>) {
-    acceptInvitationMutation.mutate(values);
-  }
-
   if (isUserLoading) {
     return <div>Loading...</div>;
   }
@@ -156,14 +133,7 @@ export default function AcceptInvitation() {
           <h2 className="text-center text-3xl font-bold text-gray-900 mb-4">
             Accept Invitation
           </h2>
-          {/* <p className="mt-2 text-center text-sm text-gray-600">
-            You&apos;ve been invited to join {invitation.organizations.name} as
-            a {invitation.role}.
-          </p>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Invited by: {invitation.created_by.full_name} (
-            {invitation.created_by.email})
-          </p> */}
+
           <p className="mt-2 text-center text-sm text-gray-600">
             <span className="font-bold">{invitation.created_by.full_name}</span>{" "}
             has invited you to join{" "}

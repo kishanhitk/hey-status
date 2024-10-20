@@ -16,7 +16,7 @@ import { useEffect } from "react";
 const LoginPage = () => {
   const supabase = useSupabase();
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/dashboard";
+  const redirect = searchParams.get("redirect") || "/redirect";
   const navigate = useNavigate();
   const { user, loading: userLoading } = useUser();
 
