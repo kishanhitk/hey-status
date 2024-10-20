@@ -54,11 +54,11 @@ CREATE TABLE incidents (
 -- Incident Updates table
 CREATE TABLE incident_updates (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  incident_id UUID NOT NULL REFERENCES incidents(id),
-  message TEXT NOT NULL,
+  incident_id UUID NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
   status TEXT NOT NULL CHECK (status IN ('investigating', 'identified', 'monitoring', 'resolved')),
-  created_by UUID NOT NULL REFERENCES users(id),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  message TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  created_by UUID NOT NULL REFERENCES users(id)
 );
 
 -- Services Incidents junction table

@@ -1,16 +1,3 @@
--- Add a new table for incident updates
-CREATE TABLE incident_updates (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  incident_id UUID NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
-  status TEXT NOT NULL CHECK (status IN ('investigating', 'identified', 'monitoring', 'resolved')),
-  message TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  created_by UUID NOT NULL REFERENCES users(id)
-);
-
--- Add an index for faster queries
-CREATE INDEX idx_incident_updates_incident_id ON incident_updates(incident_id);
-
 -- Remove the status column from the incidents table
 ALTER TABLE incidents DROP COLUMN status;
 
