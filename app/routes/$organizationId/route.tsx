@@ -17,7 +17,7 @@ import {
   MaintenanceStatus,
   ServiceStatus,
 } from "~/lib/constants";
-import { formatDateTime, formatUTCDate } from "~/utils/dateTime";
+import { formatDateTime } from "~/utils/dateTime";
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { organizationId } = params;
@@ -248,7 +248,7 @@ export default function PublicStatusPage() {
                         {maintenance.maintenance_updates.map((update) => (
                           <div key={update.id}>
                             <div className="text-sm text-gray-500">
-                              {formatUTCDate(update.created_at)}
+                              {formatDateTime(update.created_at)}
                             </div>
                             <p className="text-gray-700">{update.message}</p>
                           </div>
@@ -304,7 +304,7 @@ export default function PublicStatusPage() {
                           </span>
                         </div>
                         <div className="text-sm text-gray-500">
-                          {formatUTCDate(update.created_at)}
+                          {formatDateTime(update.created_at)}
                         </div>
                         <p className="text-gray-700">{update.message}</p>
                       </div>
@@ -319,7 +319,7 @@ export default function PublicStatusPage() {
       <footer className="bg-white border-t">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <p className="text-gray-500">
-            © 2023 {organization.name}. All rights reserved.
+            © 2024 {organization.name}. All rights reserved.
           </p>
           <div className="flex space-x-4">
             <Link
