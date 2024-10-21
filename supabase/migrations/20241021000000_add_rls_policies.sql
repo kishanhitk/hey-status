@@ -173,14 +173,8 @@ CREATE POLICY "Admins and editors can manage services scheduled maintenances" ON
     );
 
 -- Invitations table policies
-CREATE POLICY "Users can view invitations in their organization" ON public.invitations
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.users
-            WHERE users.id = auth.uid() AND users.organization_id = invitations.organization_id
-        )
-    );
-
+CREATE POLICY "Allow public to view specific invitation" ON public.invitations
+    FOR SELECT USING (true);
 CREATE POLICY "Admins can manage invitations" ON public.invitations
     FOR ALL USING (
         EXISTS (
