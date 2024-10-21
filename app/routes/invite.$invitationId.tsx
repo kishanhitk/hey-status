@@ -1,9 +1,9 @@
-import { LoaderFunctionArgs, json } from "@remix-run/cloudflare";
+import { LoaderFunctionArgs, json, MetaFunction } from "@remix-run/cloudflare";
 import { useLoaderData, useNavigate, Link } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
 import { useUser } from "~/hooks/useUser";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import { toast } from "~/hooks/use-toast";
 import DotPattern from "~/components/ui/dot-pattern";
@@ -16,6 +16,14 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
+import { metaGenerator } from "~/utils/metaGenerator";
+
+export const meta: MetaFunction = () => {
+  return metaGenerator({
+    title: "Accept Invitation",
+    description: "Accept your invitation to join an organization.",
+  });
+};
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { invitationId } = params;
@@ -30,8 +38,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     .select(
       `
       *,
-      organizations (name),
-      created_by (full_name, email)
+      organizations (name)
     `
     )
     .eq("id", invitationId)
@@ -68,31 +75,29 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
 }
 
 export default function AcceptInvitation() {
-  const { invitation, user, error } = useLoaderData<typeof loader>();
+  const { invitation, error } = useLoaderData<typeof loader>();
   const supabase = useSupabase();
   const navigate = useNavigate();
-  const { loading: isUserLoading } = useUser();
+  const { user, loading: isUserLoading } = useUser();
+  const queryClient = useQueryClient();
 
   const acceptInvitationMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("User not logged in");
 
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({
-          organization_id: invitation.organization_id,
-          role: invitation.role,
-        })
-        .eq("id", user.id);
+      const { data, error } = await supabase.functions.invoke(
+        "accept-invitation",
+        {
+          body: { invitationId: invitation.id },
+        }
+      );
 
-      if (updateError) throw updateError;
-
-      await supabase.from("invitations").delete().eq("id", invitation.id);
-
-      return { success: true };
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       toast({ title: "Invitation accepted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
       navigate("/dashboard");
     },
     onError: (error: Error) => {
@@ -143,12 +148,9 @@ export default function AcceptInvitation() {
           <CardHeader>
             <CardTitle>Invitation Details</CardTitle>
             <CardDescription>
+              You have been invited to join{" "}
               <span className="font-semibold">
-                {invitation.created_by.full_name}
-              </span>{" "}
-              has invited you to join{" "}
-              <span className="font-semibold">
-                {invitation.organizations.name}
+                {invitation.organizations?.name}
               </span>{" "}
               as a <span className="font-semibold">{invitation.role}</span>
             </CardDescription>

@@ -251,6 +251,16 @@ export default function IncidentDetails() {
 
       if (error) throw error;
 
+      // Update the incident's resolved_at time if the status is changed to "resolved"
+      if (values.status === INCIDENT_STATUS.RESOLVED) {
+        const { error: resolvedError } = await supabase
+          .from("incidents")
+          .update({ resolved_at: new Date().toISOString() })
+          .eq("id", incidentId);
+
+        if (resolvedError) throw resolvedError;
+      }
+
       if (values.updateServiceStatus) {
         const newServiceStatus = getServiceStatus(
           values.status,

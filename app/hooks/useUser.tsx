@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSupabase } from "./useSupabase";
 import { Database } from "~/types/supabase";
 import { User } from "@supabase/supabase-js";
+import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 
 type Profile = Database["public"]["Tables"]["users"]["Row"] & {
   organization: Database["public"]["Tables"]["organizations"]["Row"] | null;
@@ -38,6 +39,8 @@ export function useUser() {
         ...data,
         organization: data.organization || null,
       };
+
+      console.log(profile);
 
       return {
         ...authUser,
