@@ -144,41 +144,53 @@ export default function Settings() {
 
   if (loading) {
     return (
-      <div className="p-8 flex justify-center items-center">
-        <Loader2 className="h-4 w-4 animate-spin" />
+      <div className="p-4 sm:p-6 md:p-8 flex justify-center items-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   if (user?.profile?.role !== "admin") {
     return (
-      <div className="p-8">
-        <h1 className="text-3xl font-bold mb-8">Settings</h1>
+      <div className="p-4 sm:p-6 md:p-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4">Settings</h1>
         <p>You do not have permission to access this page.</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-8">Organization Settings</h1>
-      <Form onSubmit={onSubmit} className="space-y-4">
+    <div className="p-4 sm:p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
         <div>
-          <Label htmlFor="name">Organization Name</Label>
-          <Input
-            id="name"
-            {...register("name")}
-            defaultValue={organization?.name}
-          />
-          {errors.name && (
-            <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-          )}
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            Organization Settings
+          </h1>
+          <p className="text-sm text-gray-500 mt-1 max-w-lg">
+            Manage your organization's settings and preferences.
+          </p>
         </div>
-        <Button type="submit">Update Organization Name</Button>
-      </Form>
-      {actionData?.error && (
-        <p className="text-red-500 mt-4">{actionData.error}</p>
-      )}
+      </div>
+
+      <div className="max-w-md">
+        <Form onSubmit={onSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Organization Name</Label>
+            <Input
+              id="name"
+              {...register("name")}
+              defaultValue={organization?.name}
+            />
+            {errors.name && (
+              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+            )}
+          </div>
+          <Button type="submit">Update Organization Name</Button>
+        </Form>
+        {actionData?.error && (
+          <p className="text-red-500 mt-4">{actionData.error}</p>
+        )}
+      </div>
     </div>
   );
 }

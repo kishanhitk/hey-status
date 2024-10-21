@@ -26,7 +26,7 @@ import { toast } from "~/hooks/use-toast";
 import { ServiceForm } from "~/routes/dashboard.services/ServiceForm";
 import { useUser } from "~/hooks/useUser";
 import { Edit2Icon, ExternalLink, Trash2Icon } from "lucide-react";
-import { SERVICE_STATUS_LABELS } from "~/lib/constants";
+import { SERVICE_STATUS_LABELS, ServiceStatus } from "~/lib/constants";
 import {
   Select,
   SelectContent,
@@ -35,18 +35,6 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { metaGenerator } from "~/utils/metaGenerator";
-
-type Service = {
-  id: string;
-  name: string;
-  description: string;
-  url: string;
-  current_status:
-    | "operational"
-    | "degraded_performance"
-    | "partial_outage"
-    | "major_outage";
-};
 
 export const meta: MetaFunction = () => {
   return metaGenerator({
@@ -199,15 +187,12 @@ export default function Services() {
     }
   };
 
-  const handleStatusChange = (
-    serviceId: string,
-    newStatus: Service["current_status"]
-  ) => {
+  const handleStatusChange = (serviceId: string, newStatus: ServiceStatus) => {
     updateServiceMutation.mutate({ id: serviceId, current_status: newStatus });
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8">
+    <div className="p-4 sm:p-6 md:p-8 container">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Services</h1>
@@ -238,38 +223,22 @@ export default function Services() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead>URL</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>URL</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {services.map((service: Service) => (
+              {services.map((service) => (
                 <TableRow key={service.id}>
                   <TableCell>{service.name}</TableCell>
                   <TableCell>{service.description}</TableCell>
-                  <TableCell>
-                    {service.url && (
-                      <a
-                        href={service.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline flex items-center"
-                      >
-                        {service.url}
-                        <ExternalLink className="w-4 h-4 inline-block ml-2" />
-                      </a>
-                    )}
-                  </TableCell>
                   <TableCell>
                     <div className="flex items-center">
                       <Select
                         value={service.current_status}
                         onValueChange={(value) =>
-                          handleStatusChange(
-                            service.id,
-                            value as Service["current_status"]
-                          )
+                          handleStatusChange(service.id, value as ServiceStatus)
                         }
                       >
                         <SelectTrigger className="w-[180px]">
@@ -298,12 +267,16 @@ export default function Services() {
                           <>
                             <div
                               className={`w-3 h-3 rounded-full mr-2 ${
-                                STATUS_COLORS[service.current_status].dot
+                                STATUS_COLORS[
+                                  service.current_status as ServiceStatus
+                                ].dot
                               } animate-ping absolute animate-all duration-&lsqb;2000ms&rsqb;`}
                             ></div>
                             <div
                               className={`w-3 h-3 rounded-full mr-2 ${
-                                STATUS_COLORS[service.current_status].dot
+                                STATUS_COLORS[
+                                  service.current_status as ServiceStatus
+                                ].dot
                               }`}
                             ></div>
                           </>
@@ -312,6 +285,20 @@ export default function Services() {
                     </div>
                   </TableCell>
                   <TableCell>
+                    {service.url && (
+                      <a
+                        href={service.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline flex items-center"
+                      >
+                        {service.url}
+                        <ExternalLink className="w-4 h-4 inline-block ml-2" />
+                      </a>
+                    )}
+                  </TableCell>
+
+                  <TableCell className="flex items-center">
                     <Button
                       variant="ghost"
                       size="icon"

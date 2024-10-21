@@ -352,138 +352,140 @@ export default function IncidentDetails() {
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-8">Incident Details</h1>
+    <div className="p-4 sm:p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold">Incident Details</h1>
+      </div>
 
-      <div className="flex">
-        <div className="w-full">
-          <Form {...incidentForm}>
-            <form
-              onSubmit={incidentForm.handleSubmit(handleIncidentSubmit)}
-              className="space-y-4"
-            >
-              <FormField
-                control={incidentForm.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={incidentForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={incidentForm.control}
-                name="impact"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Impact</FormLabel>
-                    <FormControl>
-                      <div className="flex space-x-4">
-                        {[
-                          { value: "none", label: "None" },
-                          { value: "minor", label: "Minor" },
-                          { value: "major", label: "Major" },
-                          { value: "critical", label: "Critical" },
-                        ].map((impact) => (
-                          <label
-                            key={impact.value}
-                            className="flex items-center"
+      <div className="space-y-6 sm:space-y-8">
+        <Form {...incidentForm}>
+          <form
+            onSubmit={incidentForm.handleSubmit(handleIncidentSubmit)}
+            className="space-y-4 sm:space-y-6"
+          >
+            <FormField
+              control={incidentForm.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={incidentForm.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={incidentForm.control}
+              name="impact"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Impact</FormLabel>
+                  <FormControl>
+                    <div className="flex flex-wrap gap-2 sm:gap-4">
+                      {[
+                        { value: "none", label: "None" },
+                        { value: "minor", label: "Minor" },
+                        { value: "major", label: "Major" },
+                        { value: "critical", label: "Critical" },
+                      ].map((impact) => (
+                        <label key={impact.value} className="flex items-center">
+                          <input
+                            type="radio"
+                            {...field}
+                            value={impact.value}
+                            checked={field.value === impact.value}
+                            className="sr-only"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => field.onChange(impact.value)}
+                            className={`border-gray-300 text-gray-500 rounded-2xl px-7 ${
+                              field.value === impact.value
+                                ? "border-black text-black"
+                                : ""
+                            }`}
                           >
-                            <input
-                              type="radio"
-                              {...field}
-                              value={impact.value}
-                              checked={field.value === impact.value}
-                              className="sr-only"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => field.onChange(impact.value)}
-                              className={`border-gray-300 text-gray-500 rounded-2xl px-7 ${
-                                field.value === impact.value
-                                  ? "border-black text-black"
-                                  : ""
-                              }`}
+                            {impact.label}
+                          </Button>
+                        </label>
+                      ))}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={incidentForm.control}
+              name="serviceIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Affected Services</FormLabel>
+                  <FormControl>
+                    <MultiSelector
+                      onValuesChange={field.onChange}
+                      values={field.value}
+                      options={services.map((service) => ({
+                        value: service.id,
+                        label: service.name,
+                      }))}
+                    >
+                      <MultiSelectorTrigger>
+                        <MultiSelectorInput placeholder="Select affected services" />
+                      </MultiSelectorTrigger>
+                      <MultiSelectorContent>
+                        <MultiSelectorList>
+                          {services.map((service) => (
+                            <MultiSelectorItem
+                              key={service.id}
+                              value={service.id}
                             >
-                              {impact.label}
-                            </Button>
-                          </label>
-                        ))}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={incidentForm.control}
-                name="serviceIds"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Affected Services</FormLabel>
-                    <FormControl>
-                      <MultiSelector
-                        onValuesChange={field.onChange}
-                        values={field.value}
-                        options={services.map((service) => ({
-                          value: service.id,
-                          label: service.name,
-                        }))}
-                      >
-                        <MultiSelectorTrigger>
-                          <MultiSelectorInput placeholder="Select affected services" />
-                        </MultiSelectorTrigger>
-                        <MultiSelectorContent>
-                          <MultiSelectorList>
-                            {services.map((service) => (
-                              <MultiSelectorItem
-                                key={service.id}
-                                value={service.id}
-                              >
-                                {service.name}
-                              </MultiSelectorItem>
-                            ))}
-                          </MultiSelectorList>
-                        </MultiSelectorContent>
-                      </MultiSelector>
-                    </FormControl>
-                    <FormDescription>
-                      Select the services affected by this incident.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" disabled={updateIncidentMutation.isPending}>
-                {updateIncidentMutation.isPending
-                  ? "Updating..."
-                  : "Update Incident"}
-              </Button>
-            </form>
-          </Form>
+                              {service.name}
+                            </MultiSelectorItem>
+                          ))}
+                        </MultiSelectorList>
+                      </MultiSelectorContent>
+                    </MultiSelector>
+                  </FormControl>
+                  <FormDescription>
+                    Select the services affected by this incident.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button
+              type="submit"
+              disabled={updateIncidentMutation.isPending}
+              className="w-full sm:w-auto"
+            >
+              {updateIncidentMutation.isPending
+                ? "Updating..."
+                : "Update Incident"}
+            </Button>
+          </form>
+        </Form>
 
-          <Separator className="my-8" />
+        <Separator />
 
-          <h2 className="text-2xl font-bold mb-4">Status Updates</h2>
-
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">Status Updates</h2>
           {incidentData?.incident_updates
             .sort(
               (a, b) =>
@@ -501,14 +503,16 @@ export default function IncidentDetails() {
                 <p>{update.message}</p>
               </div>
             ))}
+        </div>
 
-          <Separator className="my-8" />
+        <Separator />
 
-          <h2 className="text-2xl font-bold mb-4">Add Update</h2>
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">Add Update</h2>
           <Form {...updateForm}>
             <form
               onSubmit={updateForm.handleSubmit(handleUpdateSubmit)}
-              className="space-y-4"
+              className="space-y-4 sm:space-y-6"
             >
               <FormField
                 control={updateForm.control}
@@ -622,14 +626,20 @@ export default function IncidentDetails() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={addUpdateMutation.isPending}>
+              <Button
+                type="submit"
+                disabled={addUpdateMutation.isPending}
+                className="w-full sm:w-auto"
+              >
                 {addUpdateMutation.isPending ? "Adding..." : "Add Update"}
               </Button>
             </form>
           </Form>
+        </div>
 
-          <Separator className="my-8" />
+        <Separator />
 
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <Dialog
             open={isDeleteDialogOpen}
             onOpenChange={setIsDeleteDialogOpen}
@@ -637,7 +647,7 @@ export default function IncidentDetails() {
             <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="w-fit border-red-500 text-red-500 hover:bg-red-500 hover:text-white ml-auto"
+                className="w-full sm:w-auto border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
               >
                 Delete Incident
               </Button>

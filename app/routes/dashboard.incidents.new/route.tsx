@@ -183,10 +183,15 @@ export default function NewIncident() {
   }
 
   return (
-    <div className="container mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-8">Create New Incident</h1>
+    <div className="p-4 sm:p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold">Create New Incident</h1>
+      </div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-6 sm:space-y-8"
+        >
           <FormField
             control={form.control}
             name="title"
@@ -232,7 +237,7 @@ export default function NewIncident() {
               <FormItem>
                 <FormLabel>Status</FormLabel>
                 <FormControl>
-                  <div className="flex space-x-4">
+                  <div className="flex flex-wrap gap-2 sm:gap-4">
                     {[
                       {
                         value: INCIDENT_STATUS.INVESTIGATING,
@@ -316,7 +321,7 @@ export default function NewIncident() {
               <FormItem>
                 <FormLabel>Impact</FormLabel>
                 <FormControl>
-                  <div className="flex space-x-4">
+                  <div className="flex flex-wrap gap-2 sm:gap-4">
                     {[
                       { value: "none", label: "None" },
                       { value: "minor", label: "Minor" },
@@ -423,7 +428,11 @@ export default function NewIncident() {
             )}
           />
 
-          <Button type="submit" disabled={createIncidentMutation.isPending}>
+          <Button
+            type="submit"
+            disabled={createIncidentMutation.isPending}
+            className="w-full sm:w-auto"
+          >
             {createIncidentMutation.isPending
               ? "Creating..."
               : "Create Incident"}

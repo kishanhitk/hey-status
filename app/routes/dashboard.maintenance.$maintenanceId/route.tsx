@@ -428,231 +428,235 @@ export default function MaintenanceDetails() {
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-8">Maintenance Details</h1>
+    <div className="p-4 sm:p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold">Maintenance Details</h1>
+      </div>
       <div className="mb-4">
         <strong>Status:</strong> {getMaintenanceStatus(maintenanceData)}
       </div>
 
-      <div className="flex">
-        <div className="w-full">
-          <Form {...maintenanceForm}>
-            <form
-              onSubmit={maintenanceForm.handleSubmit(handleMaintenanceSubmit)}
-              className="space-y-4"
+      <div className="space-y-6 sm:space-y-8">
+        <Form {...maintenanceForm}>
+          <form
+            onSubmit={maintenanceForm.handleSubmit(handleMaintenanceSubmit)}
+            className="space-y-4 sm:space-y-6"
+          >
+            <FormField
+              control={maintenanceForm.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={maintenanceForm.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={maintenanceForm.control}
+              name="impact"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Impact</FormLabel>
+                  <FormControl>
+                    <div className="flex flex-wrap gap-2 sm:gap-4">
+                      {Object.entries(MAINTENANCE_IMPACT).map(
+                        ([key, value]) => (
+                          <label key={value} className="flex items-center">
+                            <input
+                              type="radio"
+                              {...field}
+                              value={value}
+                              checked={field.value === value}
+                              className="sr-only"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => field.onChange(value)}
+                              className={`border-gray-300 text-gray-500 ${
+                                field.value === value
+                                  ? "border-black text-black"
+                                  : ""
+                              }`}
+                            >
+                              {MAINTENANCE_IMPACT_LABELS[value]}
+                            </Button>
+                          </label>
+                        )
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <FormField
+                control={maintenanceForm.control}
+                name="start_time"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Start Time</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-[280px] pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP HH:mm:ss")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                        <div className="p-3 border-t border-border">
+                          <TimePickerDemo
+                            setDate={field.onChange}
+                            date={field.value}
+                          />
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={maintenanceForm.control}
+                name="end_time"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>End Time</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-[280px] pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP HH:mm:ss")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                        <div className="p-3 border-t border-border">
+                          <TimePickerDemo
+                            setDate={field.onChange}
+                            date={field.value}
+                          />
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={maintenanceForm.control}
+              name="serviceIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Affected Services</FormLabel>
+                  <FormControl>
+                    <MultiSelector
+                      onValuesChange={field.onChange}
+                      values={field.value}
+                      options={services.map((service) => ({
+                        value: service.id,
+                        label: service.name,
+                      }))}
+                    >
+                      <MultiSelectorTrigger>
+                        <MultiSelectorInput placeholder="Select affected services" />
+                      </MultiSelectorTrigger>
+                      <MultiSelectorContent>
+                        <MultiSelectorList>
+                          {services.map((service) => (
+                            <MultiSelectorItem
+                              key={service.id}
+                              value={service.id}
+                            >
+                              {service.name}
+                            </MultiSelectorItem>
+                          ))}
+                        </MultiSelectorList>
+                      </MultiSelectorContent>
+                    </MultiSelector>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button
+              type="submit"
+              disabled={updateMaintenanceMutation.isPending}
+              className="w-full sm:w-auto"
             >
-              <FormField
-                control={maintenanceForm.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {updateMaintenanceMutation.isPending
+                ? "Updating..."
+                : "Update Maintenance"}
+            </Button>
+          </form>
+        </Form>
 
-              <FormField
-                control={maintenanceForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <Separator />
 
-              <FormField
-                control={maintenanceForm.control}
-                name="impact"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Impact</FormLabel>
-                    <FormControl>
-                      <div className="flex space-x-4">
-                        {Object.entries(MAINTENANCE_IMPACT).map(
-                          ([key, value]) => (
-                            <label key={value} className="flex items-center">
-                              <input
-                                type="radio"
-                                {...field}
-                                value={value}
-                                checked={field.value === value}
-                                className="sr-only"
-                              />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => field.onChange(value)}
-                                className={`border-gray-300 text-gray-500 ${
-                                  field.value === value
-                                    ? "border-black text-black"
-                                    : ""
-                                }`}
-                              >
-                                {MAINTENANCE_IMPACT_LABELS[value]}
-                              </Button>
-                            </label>
-                          )
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex gap-4">
-                <FormField
-                  control={maintenanceForm.control}
-                  name="start_time"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Start Time</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-[280px] pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP HH:mm:ss")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                          <div className="p-3 border-t border-border">
-                            <TimePickerDemo
-                              setDate={field.onChange}
-                              date={field.value}
-                            />
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={maintenanceForm.control}
-                  name="end_time"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>End Time</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-[280px] pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP HH:mm:ss")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                          <div className="p-3 border-t border-border">
-                            <TimePickerDemo
-                              setDate={field.onChange}
-                              date={field.value}
-                            />
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={maintenanceForm.control}
-                name="serviceIds"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Affected Services</FormLabel>
-                    <FormControl>
-                      <MultiSelector
-                        onValuesChange={field.onChange}
-                        values={field.value}
-                        options={services.map((service) => ({
-                          value: service.id,
-                          label: service.name,
-                        }))}
-                      >
-                        <MultiSelectorTrigger>
-                          <MultiSelectorInput placeholder="Select affected services" />
-                        </MultiSelectorTrigger>
-                        <MultiSelectorContent>
-                          <MultiSelectorList>
-                            {services.map((service) => (
-                              <MultiSelectorItem
-                                key={service.id}
-                                value={service.id}
-                              >
-                                {service.name}
-                              </MultiSelectorItem>
-                            ))}
-                          </MultiSelectorList>
-                        </MultiSelectorContent>
-                      </MultiSelector>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button
-                type="submit"
-                disabled={updateMaintenanceMutation.isPending}
-              >
-                {updateMaintenanceMutation.isPending
-                  ? "Updating..."
-                  : "Update Maintenance"}
-              </Button>
-            </form>
-          </Form>
-
-          <Separator className="my-8" />
-
-          <h2 className="text-2xl font-bold mb-4">Maintenance Updates</h2>
-
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">
+            Maintenance Updates
+          </h2>
           {maintenanceData?.maintenance_updates
             .sort(
               (a, b) =>
@@ -667,14 +671,16 @@ export default function MaintenanceDetails() {
                 <p>{update.message}</p>
               </div>
             ))}
+        </div>
 
-          <Separator className="my-8" />
+        <Separator />
 
-          <h2 className="text-2xl font-bold mb-4">Add Update</h2>
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">Add Update</h2>
           <Form {...updateForm}>
             <form
               onSubmit={updateForm.handleSubmit(handleUpdateSubmit)}
-              className="space-y-4"
+              className="space-y-4 sm:space-y-6"
             >
               <FormField
                 control={updateForm.control}
@@ -689,79 +695,85 @@ export default function MaintenanceDetails() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={addUpdateMutation.isPending}>
+              <Button
+                type="submit"
+                disabled={addUpdateMutation.isPending}
+                className="w-full sm:w-auto"
+              >
                 {addUpdateMutation.isPending ? "Adding..." : "Add Update"}
               </Button>
             </form>
           </Form>
+        </div>
 
-          <Separator className="my-8" />
+        <Separator />
 
-          <div className="flex space-x-4">
-            {getMaintenanceStatus(maintenanceData) === "Scheduled" && (
-              <Dialog
-                open={isStartDialogOpen}
-                onOpenChange={setIsStartDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button>Start Maintenance</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Start Maintenance</DialogTitle>
-                    <DialogDescription>
-                      Are you sure you want to start this maintenance now? This
-                      will update the start time to the current time.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsStartDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button onClick={handleStartMaintenance}>
-                      Start Maintenance
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
-            {getMaintenanceStatus(maintenanceData) === "In Progress" && (
-              <Dialog
-                open={isCompleteDialogOpen}
-                onOpenChange={setIsCompleteDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button>Complete Maintenance</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Complete Maintenance</DialogTitle>
-                    <DialogDescription>
-                      Are you sure you want to complete this maintenance now?
-                      This will update the end time to the current time.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsCompleteDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button onClick={handleCompleteMaintenance}>
-                      Complete Maintenance
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
+        <div className="flex flex-col sm:flex-row gap-4">
+          {getMaintenanceStatus(maintenanceData) === "Scheduled" && (
+            <Dialog
+              open={isStartDialogOpen}
+              onOpenChange={setIsStartDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button>Start Maintenance</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Start Maintenance</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to start this maintenance now? This
+                    will update the start time to the current time.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsStartDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleStartMaintenance}>
+                    Start Maintenance
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+          {getMaintenanceStatus(maintenanceData) === "In Progress" && (
+            <Dialog
+              open={isCompleteDialogOpen}
+              onOpenChange={setIsCompleteDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button>Complete Maintenance</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Complete Maintenance</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to complete this maintenance now? This
+                    will update the end time to the current time.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCompleteDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCompleteMaintenance}>
+                    Complete Maintenance
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
 
-          <Separator className="my-8" />
+        <Separator />
 
+        <div className="flex justify-end">
           <AlertDialog
             open={isDeleteDialogOpen}
             onOpenChange={setIsDeleteDialogOpen}
@@ -769,7 +781,7 @@ export default function MaintenanceDetails() {
             <AlertDialogTrigger asChild>
               <Button
                 variant="outline"
-                className="w-fit border-red-500 text-red-500 hover:bg-red-500 hover:text-white ml-auto"
+                className="w-full sm:w-auto border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
               >
                 Delete Maintenance
               </Button>
