@@ -30,8 +30,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     .select(
       `
       *,
-      organizations (name),
-      created_by (full_name, email)
+      organizations (name)
     `
     )
     .eq("id", invitationId)
@@ -143,12 +142,9 @@ export default function AcceptInvitation() {
           <CardHeader>
             <CardTitle>Invitation Details</CardTitle>
             <CardDescription>
+              You have been invited to join{" "}
               <span className="font-semibold">
-                {invitation.created_by.full_name}
-              </span>{" "}
-              has invited you to join{" "}
-              <span className="font-semibold">
-                {invitation.organizations.name}
+                {invitation.organizations?.name}
               </span>{" "}
               as a <span className="font-semibold">{invitation.role}</span>
             </CardDescription>
