@@ -46,7 +46,7 @@ export default function Component() {
         )}
       </header>
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-28 xl:py-36 relative">
+        <section className="w-full py-12 md:py-24 lg:py-28 xl:py-28 relative">
           <div className="container relative z-10">
             <div className="flex flex-col items-center space-y-8 text-center">
               <div className="space-y-5">
@@ -69,7 +69,13 @@ export default function Component() {
                 </div>
               </div>
             </div>
+            <img
+              src="/images/status-page-example.png"
+              alt="HeyStatus Example Status Page"
+              className="w-full max-w-[1000px] rounded-xl shadow-xl mx-auto mt-12 border-2 border-gray-100 hover:scale-105 transition-all duration-300"
+            />
           </div>
+
           <DotPattern
             width={20}
             height={20}
