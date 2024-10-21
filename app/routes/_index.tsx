@@ -2,7 +2,7 @@ import { Link, MetaFunction } from "@remix-run/react";
 import { Globe, Bell, ArrowRight } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import DotPattern from "~/components/ui/dot-pattern";
+import { DotPattern } from "~/components/ui/dot-pattern";
 import { useUser } from "~/hooks/useUser";
 import { cn } from "~/lib/utils";
 import { metaGenerator } from "~/utils/metaGenerator";
@@ -15,7 +15,7 @@ export default function Component() {
   const { user } = useUser();
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-14 flex items-center container">
+      <header className="h-14 flex items-center container">
         <Link className="flex items-center justify-center" to="/">
           <Globe className="h-6 w-6" />
           <span className="ml-2 text-xl font-bold">HeyStatus</span>
@@ -46,17 +46,7 @@ export default function Component() {
       </header>
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-28 xl:py-36 relative">
-          <DotPattern
-            width={20}
-            height={20}
-            cx={5}
-            cy={5}
-            cr={1}
-            className={cn(
-              "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]"
-            )}
-          />
-          <div className="container px-4 md:px-6 z-20">
+          <div className="container relative z-10">
             <div className="flex flex-col items-center space-y-8 text-center">
               <div className="space-y-5">
                 <Badge variant="outline">Open Source</Badge>
@@ -68,9 +58,9 @@ export default function Component() {
                   pages. Monitor your API and website globally.
                 </p>
               </div>
-              <div className="w-full max-w-sm space-y-4">
+              <div className="w-full max-w-sm space-y-2">
                 <div className="flex space-x-2">
-                  <Button asChild className="w-full">
+                  <Button asChild className="w-full rounded-lg py-5 text-md">
                     <Link to="/login">Get Started</Link>
                   </Button>
                 </div>
@@ -80,6 +70,16 @@ export default function Component() {
               </div>
             </div>
           </div>
+          <DotPattern
+            width={20}
+            height={20}
+            cx={5}
+            cy={5}
+            cr={1}
+            className={cn(
+              "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]"
+            )}
+          />
         </section>
         <section id="features" className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
