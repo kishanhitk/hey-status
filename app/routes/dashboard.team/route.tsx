@@ -41,28 +41,35 @@ import {
 } from "~/components/ui/table";
 import { toast } from "~/hooks/use-toast";
 import { useState } from "react";
-import { ROLE_LABELS, Role } from "~/lib/constants";
+import { ROLE_LABELS, Role, ROLES } from "~/lib/constants";
 import { metaGenerator } from "~/utils/metaGenerator";
+import { Loader2 } from "lucide-react";
+import { format } from "date-fns";
 
 type TeamMember = {
   id: string;
   email: string;
   full_name: string;
-  role: string;
+  role: Role;
   created_at: string;
 };
 
 type Invitation = {
   id: string;
   email: string;
-  role: string;
+  role: Role;
   expires_at: string;
 };
 
 const inviteFormSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
-  role: z.enum(["admin", "editor", "viewer"]),
+  role: z.enum([ROLES.ADMIN, ROLES.EDITOR, ROLES.VIEWER]),
+});
+
+const updateRoleSchema = z.object({
+  userId: z.string(),
+  role: z.enum([ROLES.ADMIN, ROLES.EDITOR, ROLES.VIEWER]),
 });
 
 export const meta: MetaFunction = () => {
@@ -86,24 +93,26 @@ export default function Team() {
   const queryClient = useQueryClient();
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
-  const { data: team } = useQuery({
+  const { data: team, isLoading: isTeamLoading } = useQuery<TeamMember[]>({
     queryKey: ["team"],
     queryFn: async () => {
       const { data, error } = await supabase.from("users").select("*");
       if (error) throw error;
       return data as TeamMember[];
     },
-    initialData: initialTeam,
+    initialData: initialTeam as TeamMember[],
   });
 
-  const { data: invitations } = useQuery({
+  const { data: invitations, isLoading: isInvitationsLoading } = useQuery<
+    Invitation[]
+  >({
     queryKey: ["invitations"],
     queryFn: async () => {
       const { data, error } = await supabase.from("invitations").select("*");
       if (error) throw error;
       return data as Invitation[];
     },
-    initialData: initialInvitations,
+    initialData: initialInvitations as Invitation[],
   });
 
   const inviteMutation = useMutation({
@@ -161,17 +170,46 @@ export default function Team() {
     },
   });
 
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: z.infer<typeof updateRoleSchema>) => {
+      const { error } = await supabase
+        .from("users")
+        .update({ role })
+        .eq("id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team"] });
+      toast({ title: "Role updated successfully" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update role",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const form = useForm<z.infer<typeof inviteFormSchema>>({
     resolver: zodResolver(inviteFormSchema),
     defaultValues: {
       email: "",
       name: "",
-      role: "viewer",
+      role: ROLES.VIEWER,
     },
   });
 
   function onSubmit(values: z.infer<typeof inviteFormSchema>) {
     inviteMutation.mutate(values);
+  }
+
+  if (isTeamLoading || isInvitationsLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
@@ -238,16 +276,27 @@ export default function Team() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="editor">Editor</SelectItem>
-                          <SelectItem value="viewer">Viewer</SelectItem>
+                          {Object.entries(ROLES).map(([key, value]) => (
+                            <SelectItem key={key} value={value}>
+                              {ROLE_LABELS[value]}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit">Send Invitation</Button>
+                <Button type="submit" disabled={inviteMutation.isPending}>
+                  {inviteMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Invitation"
+                  )}
+                </Button>
               </form>
             </Form>
           </DialogContent>
@@ -267,20 +316,44 @@ export default function Team() {
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Joined</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {team.map((member) => (
+                {team?.map((member) => (
                   <TableRow key={member.id}>
                     <TableCell>{member.full_name}</TableCell>
                     <TableCell>{member.email}</TableCell>
                     <TableCell>
-                      <div className="text-white px-4 py-1 bg-black text-xs rounded-full text-center w-fit ">
-                        {ROLE_LABELS[member.role as Role]}
+                      <div className="text-white px-4 py-1 bg-black text-xs rounded-full text-center w-fit">
+                        {ROLE_LABELS[member.role]}
                       </div>
                     </TableCell>
                     <TableCell>
-                      {new Date(member.created_at).toLocaleDateString()}
+                      {format(new Date(member.created_at), "MMM d, yyyy")}
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        defaultValue={member.role}
+                        onValueChange={(newRole: Role) => {
+                          updateRoleMutation.mutate({
+                            userId: member.id,
+                            role: newRole,
+                          });
+                        }}
+                        disabled={member.id === user?.id}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Change role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(ROLES).map(([key, value]) => (
+                            <SelectItem key={key} value={value}>
+                              {ROLE_LABELS[value]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -289,60 +362,67 @@ export default function Team() {
           </div>
         </div>
 
-        <div>
-          <h2 className="text-xl sm:text-2xl font-semibold mb-4">
-            Invitations
-          </h2>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Expires</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invitations?.map((invitation) => (
-                  <TableRow key={invitation.id}>
-                    <TableCell>{invitation.email}</TableCell>
-                    <TableCell>{invitation.role}</TableCell>
-                    <TableCell>
-                      {new Date(invitation.expires_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          navigator.clipboard.writeText(
-                            `${window.location.origin}/invite/${invitation.id}`
-                          );
-                          toast({
-                            title: "Invitation link copied to clipboard",
-                          });
-                        }}
-                      >
-                        Copy Link
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="ml-2"
-                        onClick={() =>
-                          cancelInvitationMutation.mutate(invitation.id)
-                        }
-                      >
-                        Cancel
-                      </Button>
-                    </TableCell>
+        {invitations && invitations.length > 0 && (
+          <div>
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4">
+              Invitations
+            </h2>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Expires</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {invitations.map((invitation) => (
+                    <TableRow key={invitation.id}>
+                      <TableCell>{invitation.email}</TableCell>
+                      <TableCell>{ROLE_LABELS[invitation.role]}</TableCell>
+                      <TableCell>
+                        {format(new Date(invitation.expires_at), "MMM d, yyyy")}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              `${window.location.origin}/invite/${invitation.id}`
+                            );
+                            toast({
+                              title: "Invitation link copied to clipboard",
+                            });
+                          }}
+                        >
+                          Copy Link
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="ml-2"
+                          onClick={() =>
+                            cancelInvitationMutation.mutate(invitation.id)
+                          }
+                          disabled={cancelInvitationMutation.isPending}
+                        >
+                          {cancelInvitationMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            "Cancel"
+                          )}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
