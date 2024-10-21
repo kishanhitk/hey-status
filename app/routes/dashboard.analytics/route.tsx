@@ -145,17 +145,17 @@ export default function Analytics() {
   const todayDowntime = calculateTodayDowntime(statusLogs || []);
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-4 sm:p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Analytics</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Analytics</h1>
           <p className="text-sm text-gray-500 mt-1 max-w-lg">
             Overview of your system&apos;s performance and incidents.
           </p>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>Total Incidents (30 days)</CardTitle>
@@ -186,7 +186,7 @@ export default function Analytics() {
         </Card>
       </div>
 
-      <Card className="mt-8">
+      <Card className="mt-6 sm:mt-8">
         <CardHeader>
           <CardTitle>Incidents and Maintenances (Last 30 Days)</CardTitle>
         </CardHeader>
@@ -215,7 +215,7 @@ export default function Analytics() {
         </CardContent>
       </Card>
 
-      <Card className="mt-8">
+      <Card className="mt-6 sm:mt-8">
         <CardHeader>
           <CardTitle>Recent Incidents</CardTitle>
         </CardHeader>

@@ -96,72 +96,74 @@ export default function Incidents() {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-4 sm:p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Incidents</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Incidents</h1>
           <p className="text-sm text-gray-500 mt-1 max-w-lg">
             Manage and track all incidents affecting your services.
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="mt-4 sm:mt-0">
           <Link to="/dashboard/incidents/new">Add New Incident</Link>
         </Button>
       </div>
 
       {incidents && incidents.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Current Status</TableHead>
-              <TableHead>Impact</TableHead>
-              <TableHead>Affected Services</TableHead>
-              <TableHead>Created On</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {incidents.map((incident: any) => (
-              <TableRow key={incident.id}>
-                <TableCell>
-                  <Link
-                    to={`/dashboard/incidents/${incident.id}`}
-                    className="underline"
-                    prefetch="intent"
-                  >
-                    {incident.title}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <div>
-                    {
-                      INCIDENT_STATUS_LABELS[
-                        incident.currentStatus as IncidentStatus
-                      ]
-                    }
-                    <div className="text-sm text-gray-500">
-                      Updated: {formatLocalDateTime(incident.lastUpdateTime)}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {INCIDENT_IMPACT_LABELS[incident.impact as IncidentImpact]}
-                </TableCell>
-                <TableCell>
-                  {incident.serviceIds
-                    .map(
-                      (serviceId) =>
-                        services.find((s) => s.id === serviceId)?.name
-                    )
-                    .join(", ")}
-                </TableCell>
-                <TableCell>
-                  {formatLocalDateTime(incident.created_at)}
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Current Status</TableHead>
+                <TableHead>Impact</TableHead>
+                <TableHead>Affected Services</TableHead>
+                <TableHead>Created On</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {incidents.map((incident: any) => (
+                <TableRow key={incident.id}>
+                  <TableCell>
+                    <Link
+                      to={`/dashboard/incidents/${incident.id}`}
+                      className="underline"
+                      prefetch="intent"
+                    >
+                      {incident.title}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      {
+                        INCIDENT_STATUS_LABELS[
+                          incident.currentStatus as IncidentStatus
+                        ]
+                      }
+                      <div className="text-sm text-gray-500">
+                        Updated: {formatLocalDateTime(incident.lastUpdateTime)}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {INCIDENT_IMPACT_LABELS[incident.impact as IncidentImpact]}
+                  </TableCell>
+                  <TableCell>
+                    {incident.serviceIds
+                      .map(
+                        (serviceId) =>
+                          services.find((s) => s.id === serviceId)?.name
+                      )
+                      .join(", ")}
+                  </TableCell>
+                  <TableCell>
+                    {formatLocalDateTime(incident.created_at)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       ) : (
         <div className="text-center py-12 border border-dashed rounded-lg mx-auto w-full">
           <h3 className="mt-2 text-lg font-semibold text-gray-900">

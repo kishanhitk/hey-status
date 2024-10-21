@@ -95,70 +95,74 @@ export default function Maintenance() {
   };
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-4 sm:p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Scheduled Maintenance</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            Scheduled Maintenance
+          </h1>
           <p className="text-sm text-gray-500 mt-1 max-w-lg">
             Manage and track all scheduled maintenance for your services.
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="mt-4 sm:mt-0">
           <Link to="/dashboard/maintenance/new">Schedule New Maintenance</Link>
         </Button>
       </div>
 
       {maintenances && maintenances.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Start Time</TableHead>
-              <TableHead>End Time</TableHead>
-              <TableHead>Impact</TableHead>
-              <TableHead>Affected Services</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {maintenances?.map((maintenance) => (
-              <TableRow key={maintenance.id}>
-                <TableCell className="underline font-semibold">
-                  <Link
-                    to={`/dashboard/maintenance/${maintenance.id}`}
-                    prefetch="intent"
-                  >
-                    {maintenance.title}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  {getMaintenanceStatus(maintenance)}
-                  <p className="text-xs text-muted-foreground">
-                    Updated: {formatLocalDateTime(maintenance.updated_at)}
-                  </p>
-                </TableCell>
-                <TableCell>
-                  {formatLocalDateTime(maintenance.start_time)}
-                </TableCell>
-                <TableCell>
-                  {formatLocalDateTime(maintenance.end_time)}
-                </TableCell>
-                <TableCell>
-                  {
-                    MAINTENANCE_IMPACT_LABELS[
-                      maintenance.impact as MaintenanceImpact
-                    ]
-                  }
-                </TableCell>
-                <TableCell>
-                  {maintenance.services_scheduled_maintenances
-                    .map((ssm) => ssm.services?.name)
-                    ?.join(", ")}
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Start Time</TableHead>
+                <TableHead>End Time</TableHead>
+                <TableHead>Impact</TableHead>
+                <TableHead>Affected Services</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {maintenances?.map((maintenance) => (
+                <TableRow key={maintenance.id}>
+                  <TableCell className="underline font-semibold">
+                    <Link
+                      to={`/dashboard/maintenance/${maintenance.id}`}
+                      prefetch="intent"
+                    >
+                      {maintenance.title}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    {getMaintenanceStatus(maintenance)}
+                    <p className="text-xs text-muted-foreground">
+                      Updated: {formatLocalDateTime(maintenance.updated_at)}
+                    </p>
+                  </TableCell>
+                  <TableCell>
+                    {formatLocalDateTime(maintenance.start_time)}
+                  </TableCell>
+                  <TableCell>
+                    {formatLocalDateTime(maintenance.end_time)}
+                  </TableCell>
+                  <TableCell>
+                    {
+                      MAINTENANCE_IMPACT_LABELS[
+                        maintenance.impact as MaintenanceImpact
+                      ]
+                    }
+                  </TableCell>
+                  <TableCell>
+                    {maintenance.services_scheduled_maintenances
+                      .map((ssm) => ssm.services?.name)
+                      ?.join(", ")}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       ) : (
         <div className="text-center py-12 border border-dashed rounded-lg mx-auto w-full">
           <h3 className="mt-2 text-lg font-semibold text-gray-900">
