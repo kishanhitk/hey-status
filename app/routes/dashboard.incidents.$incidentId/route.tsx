@@ -531,27 +531,41 @@ export default function IncidentDetails() {
                   <FormItem>
                     <FormLabel>Status</FormLabel>
                     <FormControl>
-                      <div className="flex space-x-4">
+                      <div className="flex flex-wrap gap-2 sm:gap-4">
                         {[
                           {
-                            value: "investigating",
-                            label: "Investigating",
+                            value: INCIDENT_STATUS.INVESTIGATING,
+                            label:
+                              INCIDENT_STATUS_LABELS[
+                                INCIDENT_STATUS.INVESTIGATING
+                              ],
                             icon: AlertCircle,
+                            color: "yellow",
                           },
                           {
-                            value: "identified",
-                            label: "Identified",
+                            value: INCIDENT_STATUS.IDENTIFIED,
+                            label:
+                              INCIDENT_STATUS_LABELS[
+                                INCIDENT_STATUS.IDENTIFIED
+                              ],
                             icon: AlertTriangle,
+                            color: "orange",
                           },
                           {
-                            value: "monitoring",
-                            label: "Monitoring",
+                            value: INCIDENT_STATUS.MONITORING,
+                            label:
+                              INCIDENT_STATUS_LABELS[
+                                INCIDENT_STATUS.MONITORING
+                              ],
                             icon: Clock,
+                            color: "blue",
                           },
                           {
-                            value: "resolved",
-                            label: "Resolved",
+                            value: INCIDENT_STATUS.RESOLVED,
+                            label:
+                              INCIDENT_STATUS_LABELS[INCIDENT_STATUS.RESOLVED],
                             icon: CheckCircle,
+                            color: "green",
                           },
                         ].map((status) => (
                           <label
@@ -569,10 +583,13 @@ export default function IncidentDetails() {
                               type="button"
                               variant="outline"
                               onClick={() => field.onChange(status.value)}
-                              className={`flex items-center space-x-2 border-gray-300 text-gray-500 ${
+                              className={`flex items-center space-x-2
+                                hover:bg-${status.color}-50
+                                hover:text-${status.color}-600
+                                ${status.color} ${
                                 field.value === status.value
-                                  ? "border-black text-black"
-                                  : ""
+                                  ? `text-${status.color}-600 border-${status.color}-500 bg-${status.color}-100`
+                                  : "text-gray-500"
                               }`}
                             >
                               <status.icon className="w-4 h-4" />
@@ -704,6 +721,24 @@ export default function IncidentDetails() {
             </DialogContent>
           </Dialog>
         </div>
+      </div>
+
+      {/* Hidden divs to register Tailwind classes */}
+      <div className="hidden bg-yellow-100 text-yellow-500 border-yellow-500 hover:bg-yellow-50 hover:text-yellow-600">
+        This is a hidden div to register the tailwind css classes for the status
+        buttons.
+      </div>
+      <div className="hidden bg-orange-100 text-orange-500 border-orange-500 hover:bg-orange-50 hover:text-orange-600">
+        This is a hidden div to register the tailwind css classes for the status
+        buttons.
+      </div>
+      <div className="hidden bg-blue-100 text-blue-500 border-blue-500 hover:bg-blue-50 hover:text-blue-600">
+        This is a hidden div to register the tailwind css classes for the status
+        buttons.
+      </div>
+      <div className="hidden bg-green-100 text-green-500 border-green-500 hover:bg-green-50 hover:text-green-600">
+        This is a hidden div to register the tailwind css classes for the status
+        buttons.
       </div>
     </div>
   );
