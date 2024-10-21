@@ -286,7 +286,7 @@ export default function NewIncident() {
                             hover:text-${status.color}-600
                             ${status.color} ${
                             field.value === status.value
-                              ? `text-${status.color}-600 border-${status.color}-500 bg-${status.color}-100`
+                              ? `text-${status.color}-600 border-${status.color}-500`
                               : "text-gray-500"
                           }`}
                         >
