@@ -50,8 +50,19 @@ ALTER TABLE public.uptime_daily_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own profile" ON public.users
     FOR SELECT USING (auth.uid() = id);
 
+-- Users can update their own profile (except role)
 CREATE POLICY "Users can update their own profile" ON public.users
-    FOR UPDATE USING (auth.uid() = id);
+    FOR UPDATE USING (auth.uid() = id)
+    WITH CHECK (auth.uid() = id AND OLD.role = NEW.role);
+
+-- Admins can update any user in their organization, including roles
+CREATE POLICY "Admins can update users in their organization" ON public.users
+    FOR UPDATE USING (
+        "public"."is_org_admin"(auth.uid(), organization_id)
+    )
+    WITH CHECK (
+        "public"."is_org_admin"(auth.uid(), organization_id)
+    );
 
 CREATE POLICY "Admins can view all users in their organization" ON public.users
     FOR SELECT USING (
