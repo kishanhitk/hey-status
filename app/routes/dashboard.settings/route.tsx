@@ -1,11 +1,10 @@
 import {
   LoaderFunctionArgs,
-  ActionFunctionArgs,
   json,
   redirect,
   MetaFunction,
 } from "@remix-run/cloudflare";
-import { useLoaderData, useActionData, Form } from "@remix-run/react";
+import { useLoaderData, Form } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useUser } from "~/hooks/useUser";
 import { Button } from "~/components/ui/button";
@@ -17,6 +16,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { metaGenerator } from "~/utils/metaGenerator";
 import { Loader2 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSupabase } from "~/hooks/useSupabase";
 
 const updateOrgSchema = z.object({
   name: z
@@ -60,54 +61,11 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   return json({ organization });
 }
 
-export async function action({ request, context }: ActionFunctionArgs) {
-  const { supabase } = createServerSupabase(request, context.cloudflare.env);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: userDetails } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (userDetails?.role !== "admin") {
-    return json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const formData = await request.formData();
-  const name = formData.get("name") as string;
-
-  const validationResult = updateOrgSchema.safeParse({ name });
-
-  if (!validationResult.success) {
-    return json({ errors: validationResult.error.flatten().fieldErrors });
-  }
-
-  const { error } = await supabase
-    .from("organizations")
-    .update({ name })
-    .eq("id", userDetails.organization_id);
-
-  if (error) {
-    return json(
-      { error: "Failed to update organization name" },
-      { status: 500 }
-    );
-  }
-
-  return json({ success: true });
-}
-
 export default function Settings() {
   const { organization } = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>();
   const { user, loading } = useUser();
+  const supabase = useSupabase();
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -120,26 +78,30 @@ export default function Settings() {
     },
   });
 
-  const onSubmit = handleSubmit(async (data) => {
-    const form = new FormData();
-    form.append("name", data.name);
+  const updateOrgMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const { error } = await supabase
+        .from("organizations")
+        .update({ name })
+        .eq("id", user?.profile.organization_id);
 
-    const response = await fetch("/dashboard/settings", {
-      method: "POST",
-      body: form,
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
+      if (error) throw error;
+    },
+    onSuccess: () => {
       toast({ title: "Organization name updated successfully" });
-    } else if (result.error) {
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+    },
+    onError: (error) => {
       toast({
         title: "Failed to update organization name",
-        description: result.error,
+        description: error.message,
         variant: "destructive",
       });
-    }
+    },
+  });
+
+  const onSubmit = handleSubmit((data) => {
+    updateOrgMutation.mutate(data.name);
   });
 
   if (loading) {
@@ -167,7 +129,7 @@ export default function Settings() {
             Organization Settings
           </h1>
           <p className="text-sm text-gray-500 mt-1 max-w-lg">
-            Manage your organization's settings and preferences.
+            Manage your organization&apos;s settings and preferences.
           </p>
         </div>
       </div>
@@ -185,11 +147,17 @@ export default function Settings() {
               <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
             )}
           </div>
-          <Button type="submit">Update Organization Name</Button>
+          <Button type="submit" disabled={updateOrgMutation.isPending}>
+            {updateOrgMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Update Organization Name"
+            )}
+          </Button>
         </Form>
-        {actionData?.error && (
-          <p className="text-red-500 mt-4">{actionData.error}</p>
-        )}
       </div>
     </div>
   );
