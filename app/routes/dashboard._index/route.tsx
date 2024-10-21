@@ -124,21 +124,32 @@ export default function DashboardIndex() {
           </CardHeader>
           <CardContent>
             {services && services.length > 0 ? (
-              <div className="flex items-center space-x-2">
-                {allOperational &&
-                !hasActiveIncidents &&
-                !hasOngoingMaintenance ? (
-                  <CheckCircle className="h-8 w-8 text-green-500" />
-                ) : (
-                  <AlertTriangle className="h-8 w-8 text-yellow-500" />
+              <div className="flex flex-col">
+                <div className="flex items-center space-x-2">
+                  {allOperational && !hasActiveIncidents ? (
+                    <CheckCircle className="h-8 w-8 text-green-500" />
+                  ) : (
+                    <AlertTriangle className="h-8 w-8 text-yellow-500" />
+                  )}
+                  <span className="text-xl font-medium">
+                    {allOperational && !hasActiveIncidents
+                      ? "All Systems Operational"
+                      : "Some Systems Affected"}
+                  </span>
+                </div>
+                {(!allOperational ||
+                  hasActiveIncidents ||
+                  hasOngoingMaintenance) && (
+                  <span className="text-sm text-gray-500 mt-1 ml-10">
+                    {hasActiveIncidents
+                      ? "Due to active incident"
+                      : !allOperational
+                      ? "Due to service issue"
+                      : hasOngoingMaintenance
+                      ? "Maintenance in progress (may affect some systems)"
+                      : ""}
+                  </span>
                 )}
-                <span className="text-xl font-medium">
-                  {allOperational &&
-                  !hasActiveIncidents &&
-                  !hasOngoingMaintenance
-                    ? "All Systems Operational"
-                    : "Some Systems Affected"}
-                </span>
               </div>
             ) : (
               <p>No services added yet.</p>
