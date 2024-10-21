@@ -2,7 +2,9 @@ import { Link, MetaFunction } from "@remix-run/react";
 import { Globe, Bell, ArrowRight } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import DotPattern from "~/components/ui/dot-pattern";
 import { useUser } from "~/hooks/useUser";
+import { cn } from "~/lib/utils";
 import { metaGenerator } from "~/utils/metaGenerator";
 
 export const meta: MetaFunction = () => {
@@ -43,10 +45,20 @@ export default function Component() {
         )}
       </header>
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center space-y-4 text-center">
-              <div className="space-y-2">
+        <section className="w-full py-12 md:py-24 lg:py-28 xl:py-36 relative">
+          <DotPattern
+            width={20}
+            height={20}
+            cx={5}
+            cy={5}
+            cr={1}
+            className={cn(
+              "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]"
+            )}
+          />
+          <div className="container px-4 md:px-6 z-20">
+            <div className="flex flex-col items-center space-y-8 text-center">
+              <div className="space-y-5">
                 <Badge variant="outline">Open Source</Badge>
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none">
                   Monitor your services with ease
@@ -56,7 +68,7 @@ export default function Component() {
                   pages. Monitor your API and website globally.
                 </p>
               </div>
-              <div className="w-full max-w-sm space-y-2">
+              <div className="w-full max-w-sm space-y-4">
                 <div className="flex space-x-2">
                   <Button asChild className="w-full">
                     <Link to="/login">Get Started</Link>
