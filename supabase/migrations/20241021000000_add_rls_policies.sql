@@ -273,3 +273,10 @@ CREATE POLICY "Allow public read access to uptime daily logs" ON public.uptime_d
 -- Allow public to insert into subscribers
 CREATE POLICY "Allow public to subscribe" ON public.subscribers
     FOR INSERT WITH CHECK (true);
+
+
+-- Allow authenticated users to create an organization
+CREATE POLICY "Authenticated users can create an organization" ON public.organizations
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (true);

@@ -31,6 +31,7 @@ import { cn } from "~/lib/utils";
 import { Globe, Loader2 } from "lucide-react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { LoaderFunctionArgs } from "@remix-run/cloudflare";
+import { useQueryClient } from "@tanstack/react-query";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -85,6 +86,7 @@ export default function CreateOrganization() {
   const supabase = useSupabase();
   const { user } = useUser();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -161,6 +163,8 @@ export default function CreateOrganization() {
         title: "Success",
         description: "Organization created successfully.",
       });
+
+      queryClient.invalidateQueries({ queryKey: ["user"] });
 
       navigate("/dashboard");
     } catch (error) {
