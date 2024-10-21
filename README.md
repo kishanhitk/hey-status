@@ -85,7 +85,7 @@ Real-time updates are implemented using Supabase's Realtime feature:
 2. On client, react takes over and subscribes to relevant tables (e.g., `services`, `incidents`) using Supabase's `subscribe()` method.
 3. When data changes in these tables, Supabase sends events to the subscribed clients.
 4. `useEffect` hook is configured to update the local state when these events are received, updating the UI in real-time.
-```
+``` typescript
 useEffect(() => {
   const subscription = supabase
     .channel("public:services")
@@ -193,18 +193,18 @@ This API allows developers to integrate HeyStatus data into their own applicatio
    - Docker (recommended OrbStack)
 
 2. **Clone the repository**:
-   ```
+   ```bash
    git clone https://github.com/kishanthik/hey-status.git
    cd hey-status
    ```
 
 3. **Install dependencies**:
    With Bun (recommended):
-   ```
+   ```bash
    bun install
    ```
    Or with npm:
-   ```
+   ```bash
    npm install
    ```
 
@@ -222,11 +222,11 @@ This API allows developers to integrate HeyStatus data into their own applicatio
    - Add Resend API key in it.
 6. **Run the development server**:
    With Bun:
-   ```
+   ```bash
    bun run dev
    ```
    Or with npm:
-   ```
+   ```bash
    npm run dev
    ```
 
@@ -283,7 +283,7 @@ The invitation acceptance process is handled by an edge function to ensure secur
 This approach ensures that sensitive operations like changing a user's organization are performed securely on the server-side.
 
 To deploy edge functions locally for testing:
-```
+```bash
 supabase functions serve
 ```
 
