@@ -1,6 +1,5 @@
 import { Link, MetaFunction } from "@remix-run/react";
-import { Globe, Bell, ArrowRight } from "lucide-react";
-import { Badge } from "~/components/ui/badge";
+import { Globe, Bell, ServerCrash } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { DotPattern } from "~/components/ui/dot-pattern";
 import { RainbowButton } from "~/components/ui/rainbow-button";
@@ -8,6 +7,15 @@ import ShinyButton from "~/components/ui/shiny-button";
 import { useUser } from "~/hooks/useUser";
 import { cn } from "~/lib/utils";
 import { metaGenerator } from "~/utils/metaGenerator";
+import { BentoCard, BentoGrid } from "~/components/ui/bento-grid";
+import {
+  BellIcon,
+  CalendarIcon,
+  FileTextIcon,
+  GlobeIcon,
+  InputIcon,
+} from "@radix-ui/react-icons";
+import { MailIcon } from "lucide-react";
 
 export const meta: MetaFunction = () => {
   return metaGenerator({});
@@ -98,94 +106,13 @@ export default function Component() {
         </section>
         <section id="features" className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
-              <img
-                alt="Status page example"
-                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover object-center sm:w-full lg:order-last"
-                height="310"
-                src="/placeholder.svg"
-                width="550"
-              />
-              <div className="flex flex-col justify-center space-y-4">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
-                  Status Pages
-                </h2>
-                <ul className="space-y-2">
-                  <li className="flex items-center">
-                    <ArrowRight className="mr-2 h-5 w-5" />
-                    <span>Build trust with real visibility to your users</span>
-                  </li>
-                  <li className="flex items-center">
-                    <ArrowRight className="mr-2 h-5 w-5" />
-                    <span>Custom domain support</span>
-                  </li>
-                  <li className="flex items-center">
-                    <ArrowRight className="mr-2 h-5 w-5" />
-                    <span>Let users subscribe to your status page</span>
-                  </li>
-                </ul>
-                <Button className="w-full sm:w-auto" asChild>
-                  <Link to="/login">Create Your Status Page</Link>
-                </Button>
-              </div>
-            </div>
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl mb-8 text-center">
+              Features
+            </h2>
+            <FeaturesBentoGrid />
           </div>
         </section>
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-100">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
-                  Incident Management
-                </h2>
-                <p className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Efficiently manage and communicate incidents to your users.
-                </p>
-              </div>
-            </div>
-            <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:grid-cols-2">
-              <div className="flex flex-col justify-center space-y-4">
-                <ul className="space-y-2">
-                  <li className="flex items-center">
-                    <Bell className="mr-2 h-5 w-5" />
-                    <span>Create and update incidents in real-time</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Bell className="mr-2 h-5 w-5" />
-                    <span>Automatically notify subscribers</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Bell className="mr-2 h-5 w-5" />
-                    <span>Track incident history and resolution times</span>
-                  </li>
-                </ul>
-                <Button className="w-full sm:w-auto" asChild>
-                  <Link to="/login">Start Managing Incidents</Link>
-                </Button>
-              </div>
-              <div className="space-y-4 rounded-xl border bg-background p-4 shadow-sm">
-                <div className="flex items-center space-x-4">
-                  <Bell className="h-5 w-5" />
-                  <div>
-                    <h3 className="font-bold">API Latency Issue</h3>
-                    <p className="text-sm text-gray-500">
-                      Investigating increased response times
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <Bell className="h-5 w-5" />
-                  <div>
-                    <h3 className="font-bold">Database Maintenance</h3>
-                    <p className="text-sm text-gray-500">
-                      Scheduled maintenance in progress
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+
         <section id="pricing" className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
@@ -220,5 +147,109 @@ export default function Component() {
         </nav>
       </footer>
     </div>
+  );
+}
+
+const features = [
+  {
+    Icon: FileTextIcon,
+    name: "Status Pages",
+    description: "Create customizable status pages to display service health.",
+    href: "/",
+    cta: "Learn more",
+    background: (
+      <img
+        src="/images/status-page-example.png"
+        className="absolute right-0 top-10 opacity-60"
+        alt="Status Page"
+      />
+    ),
+    className: "lg:row-start-1 lg:row-end-4 lg:col-start-2 lg:col-end-3",
+  },
+  {
+    Icon: InputIcon,
+    name: "Service Management",
+    description: "Easily add, update, and monitor multiple services.",
+    href: "/",
+    cta: "Learn more",
+    background: (
+      <img
+        src="/images/service-management-bg.png"
+        className="absolute -right-20 -top-20 opacity-60"
+        alt="Service Management"
+      />
+    ),
+    className: "lg:col-start-1 lg:col-end-2 lg:row-start-1 lg:row-end-3",
+  },
+  {
+    Icon: CalendarIcon,
+    name: "Manage Maintenance",
+    description: "Plan and communicate scheduled maintenance to your users.",
+    href: "/",
+    cta: "Learn more",
+    background: (
+      <img
+        src="/images/manage-maintenance-bg.png"
+        className="absolute -right-20 -top-20 opacity-60"
+        alt="Manage Maintenance"
+      />
+    ),
+    className: "lg:col-start-1 lg:col-end-2 lg:row-start-3 lg:row-end-4",
+  },
+  {
+    Icon: ServerCrash,
+    name: "Incident Management",
+    description: "Create, update, and resolve incidents efficiently.",
+    href: "/",
+    cta: "Learn more",
+    background: (
+      <img
+        src="/images/incident-management-bg.png"
+        className="absolute -right-20 -top-20 opacity-60"
+        alt="Incident Management"
+      />
+    ),
+    className: "lg:col-start-3 lg:col-end-3 lg:row-start-1 lg:row-end-2",
+  },
+  {
+    Icon: BellIcon,
+    name: "Real-time Updates",
+    description: "Updates are pushed to users in real-time via WebSocket.",
+    href: "/",
+    cta: "Learn more",
+    background: (
+      <img
+        src="/images/real-time-updates-bg.png"
+        className="absolute -right-20 -top-20 opacity-60"
+        alt="Real-time Updates"
+      />
+    ),
+    className: "lg:col-start-3 lg:col-end-3 lg:row-start-2 lg:row-end-3",
+  },
+  {
+    Icon: MailIcon,
+    name: "Email Subscriptions",
+    description:
+      "Subscribers receive email notifications for incident updates.",
+    href: "/",
+    cta: "Learn more",
+    background: (
+      <img
+        src="/images/email-subscriptions-bg.png"
+        className="absolute -right-20 -top-20 opacity-60"
+        alt="Email Subscriptions"
+      />
+    ),
+    className: "lg:col-start-3 lg:col-end-3 lg:row-start-3 lg:row-end-4",
+  },
+];
+
+function FeaturesBentoGrid() {
+  return (
+    <BentoGrid className="lg:grid-rows-3">
+      {features.map((feature) => (
+        <BentoCard key={feature.name} {...feature} />
+      ))}
+    </BentoGrid>
   );
 }
