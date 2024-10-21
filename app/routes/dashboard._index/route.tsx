@@ -4,7 +4,13 @@ import { createServerSupabase } from "~/utils/supabase.server";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Database } from "~/types/supabase";
-import { CheckCircle, AlertTriangle, XCircle, Clock } from "lucide-react";
+import {
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Clock,
+  PlusCircle,
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { SERVICE_STATUS_LABELS } from "~/lib/constants";
 import { metaGenerator } from "~/utils/metaGenerator";
@@ -97,18 +103,22 @@ export default function DashboardIndex() {
             <CardTitle>System Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center space-x-2">
-              {allOperational ? (
-                <CheckCircle className="h-8 w-8 text-green-500" />
-              ) : (
-                <AlertTriangle className="h-8 w-8 text-yellow-500" />
-              )}
-              <span className="text-xl font-medium">
-                {allOperational
-                  ? "All Systems Operational"
-                  : "Some Systems Degraded"}
-              </span>
-            </div>
+            {services && services.length > 0 ? (
+              <div className="flex items-center space-x-2">
+                {allOperational ? (
+                  <CheckCircle className="h-8 w-8 text-green-500" />
+                ) : (
+                  <AlertTriangle className="h-8 w-8 text-yellow-500" />
+                )}
+                <span className="text-xl font-medium">
+                  {allOperational
+                    ? "All Systems Operational"
+                    : "Some Systems Degraded"}
+                </span>
+              </div>
+            ) : (
+              <p>No services added yet.</p>
+            )}
           </CardContent>
         </Card>
 
@@ -165,22 +175,34 @@ export default function DashboardIndex() {
             <CardTitle>Service Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-2">
-              {services?.map((service) => (
-                <li
-                  key={service.id}
-                  className="flex items-center justify-between"
-                >
-                  <span>{service.name}</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm">
-                      {SERVICE_STATUS_LABELS[service.current_status]}
-                    </span>
-                    {getStatusIcon(service.current_status)}
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {services && services.length > 0 ? (
+              <ul className="space-y-2">
+                {services.map((service) => (
+                  <li
+                    key={service.id}
+                    className="flex items-center justify-between"
+                  >
+                    <span>{service.name}</span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm">
+                        {SERVICE_STATUS_LABELS[service.current_status]}
+                      </span>
+                      {getStatusIcon(service.current_status)}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-gray-500 mb-4">No services added yet.</p>
+                <Button asChild variant="default">
+                  <Link to="/dashboard/services">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Your First Service
+                  </Link>
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
