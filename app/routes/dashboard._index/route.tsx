@@ -40,14 +40,14 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const { data: activeIncidents } = await supabase
     .from("incidents")
     .select("*")
-    .neq("status", "resolved")
+    .is("resolved_at", null) // This selects incidents that are not resolved
     .order("created_at", { ascending: false })
     .limit(5);
 
   const { data: recentIncidents } = await supabase
     .from("incidents")
     .select("*")
-    .eq("status", "resolved")
+    .not("resolved_at", "is", null)
     .order("updated_at", { ascending: false })
     .limit(5);
 
@@ -86,6 +86,8 @@ export default function DashboardIndex() {
     (service) => service.current_status === "operational"
   );
 
+  const hasActiveIncidents = activeIncidents && activeIncidents.length > 0;
+
   return (
     <div className="p-4 sm:p-6 md:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
@@ -105,13 +107,13 @@ export default function DashboardIndex() {
           <CardContent>
             {services && services.length > 0 ? (
               <div className="flex items-center space-x-2">
-                {allOperational ? (
+                {allOperational && !hasActiveIncidents ? (
                   <CheckCircle className="h-8 w-8 text-green-500" />
                 ) : (
                   <AlertTriangle className="h-8 w-8 text-yellow-500" />
                 )}
                 <span className="text-xl font-medium">
-                  {allOperational
+                  {allOperational && !hasActiveIncidents
                     ? "All Systems Operational"
                     : "Some Systems Degraded"}
                 </span>
@@ -127,7 +129,7 @@ export default function DashboardIndex() {
             <CardTitle>Active Incidents</CardTitle>
           </CardHeader>
           <CardContent>
-            {activeIncidents && activeIncidents.length > 0 ? (
+            {hasActiveIncidents ? (
               <ul className="space-y-2">
                 {activeIncidents.map((incident: Incident) => (
                   <li key={incident.id} className="flex items-center space-x-2">
