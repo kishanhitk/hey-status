@@ -36,6 +36,7 @@ import {
   INCIDENT_STATUS_LABELS,
   SERVICE_STATUS,
   SERVICE_STATUS_LABELS,
+  ServiceStatus,
 } from "~/lib/constants";
 import { metaGenerator } from "~/utils/metaGenerator";
 
@@ -58,6 +59,7 @@ function getServiceStatus(
   incidentStatus: string,
   incidentImpact: string
 ): string {
+  console.log(incidentStatus, incidentImpact);
   if (incidentStatus === INCIDENT_STATUS.RESOLVED) {
     return SERVICE_STATUS.OPERATIONAL;
   }
@@ -418,7 +420,7 @@ export default function NewIncident() {
                           getServiceStatus(
                             form.watch("status"),
                             form.watch("impact")
-                          )
+                          ) as ServiceStatus
                         ]
                       }
                     </strong>
