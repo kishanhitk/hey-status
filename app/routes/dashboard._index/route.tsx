@@ -81,17 +81,17 @@ export default function DashboardIndex() {
   );
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-4 sm:p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Home</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Home</h1>
           <p className="text-sm text-gray-500 mt-1 max-w-lg">
             Overview of your services and incidents.
           </p>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>System Status</CardTitle>
@@ -159,7 +159,7 @@ export default function DashboardIndex() {
         </Card>
       </div>
 
-      <div className="mt-8 grid gap-6 md:grid-cols-2">
+      <div className="mt-6 sm:mt-8 grid gap-4 sm:gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Service Overview</CardTitle>
@@ -208,18 +208,18 @@ export default function DashboardIndex() {
         </Card>
       </div>
 
-      <div className="mt-8 flex justify-end space-x-4">
-        <Button asChild variant="outline">
+      <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
+        <Button asChild variant="outline" className="w-full sm:w-auto">
           <Link prefetch="intent" to="/dashboard/services">
             Manage Services
           </Link>
         </Button>
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" className="w-full sm:w-auto">
           <Link prefetch="intent" to="/dashboard/maintenance/new">
             Schedule Maintenance
           </Link>
         </Button>
-        <Button asChild>
+        <Button asChild className="w-full sm:w-auto">
           <Link prefetch="intent" to="/dashboard/incidents/new">
             Report New Incident
           </Link>
