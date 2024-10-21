@@ -1,5 +1,5 @@
 -- Create helper functions that bypass RLS
-CREATE OR REPLACE FUNCTION is_org_member(_user_id uuid, _organization_id uuid) 
+CREATE OR REPLACE FUNCTION "public"."is_org_member"(_user_id uuid, _organization_id uuid) 
 RETURNS boolean AS $$
   SELECT EXISTS (
     SELECT 1 
@@ -9,7 +9,7 @@ RETURNS boolean AS $$
   );
 $$ LANGUAGE sql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION is_org_admin(_user_id uuid, _organization_id uuid) 
+CREATE OR REPLACE FUNCTION "public"."is_org_admin"(_user_id uuid, _organization_id uuid) 
 RETURNS boolean AS $$
   SELECT EXISTS (
     SELECT 1 
@@ -20,7 +20,7 @@ RETURNS boolean AS $$
   );
 $$ LANGUAGE sql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION is_org_editor_or_admin(_user_id uuid, _organization_id uuid) 
+CREATE OR REPLACE FUNCTION "public"."is_org_editor_or_admin"(_user_id uuid, _organization_id uuid) 
 RETURNS boolean AS $$
   SELECT EXISTS (
     SELECT 1 
@@ -55,7 +55,7 @@ CREATE POLICY "Users can update their own profile" ON public.users
 
 CREATE POLICY "Admins can view all users in their organization" ON public.users
     FOR SELECT USING (
-        is_org_admin(auth.uid(), organization_id)
+        "public"."is_org_admin"(auth.uid(), organization_id)
     );
 
 CREATE POLICY "Allow insert for authenticated users" ON public.users
@@ -64,34 +64,34 @@ CREATE POLICY "Allow insert for authenticated users" ON public.users
 -- Organizations table policies
 CREATE POLICY "Users can view their own organization" ON public.organizations
     FOR SELECT USING (
-        is_org_member(auth.uid(), id)
+        "public"."is_org_member"(auth.uid(), id)
     );
 
 CREATE POLICY "Admins can update their own organization" ON public.organizations
     FOR UPDATE USING (
-        is_org_admin(auth.uid(), id)
+        "public"."is_org_admin"(auth.uid(), id)
     );
 
 -- Services table policies
 CREATE POLICY "Users can view services in their organization" ON public.services
     FOR SELECT USING (
-        is_org_member(auth.uid(), organization_id)
+        "public"."is_org_member"(auth.uid(), organization_id)
     );
 
 CREATE POLICY "Admins and editors can manage services" ON public.services
     FOR ALL USING (
-        is_org_editor_or_admin(auth.uid(), organization_id)
+        "public"."is_org_editor_or_admin"(auth.uid(), organization_id)
     );
 
 -- Incidents table policies
 CREATE POLICY "Users can view incidents in their organization" ON public.incidents
     FOR SELECT USING (
-        is_org_member(auth.uid(), organization_id)
+        "public"."is_org_member"(auth.uid(), organization_id)
     );
 
 CREATE POLICY "Admins and editors can manage incidents" ON public.incidents
     FOR ALL USING (
-        is_org_editor_or_admin(auth.uid(), organization_id)
+        "public"."is_org_editor_or_admin"(auth.uid(), organization_id)
     );
 
 -- Incident updates table policies
@@ -100,7 +100,7 @@ CREATE POLICY "Users can view incident updates in their organization" ON public.
         EXISTS (
             SELECT 1 FROM public.incidents
             WHERE id = incident_updates.incident_id
-            AND is_org_member(auth.uid(), organization_id)
+            AND "public"."is_org_member"(auth.uid(), organization_id)
         )
     );
 
@@ -109,19 +109,19 @@ CREATE POLICY "Admins and editors can manage incident updates" ON public.inciden
         EXISTS (
             SELECT 1 FROM public.incidents
             WHERE id = incident_updates.incident_id
-            AND is_org_editor_or_admin(auth.uid(), organization_id)
+            AND "public"."is_org_editor_or_admin"(auth.uid(), organization_id)
         )
     );
 
 -- Scheduled maintenances table policies
 CREATE POLICY "Users can view scheduled maintenances in their organization" ON public.scheduled_maintenances
     FOR SELECT USING (
-        is_org_member(auth.uid(), organization_id)
+        "public"."is_org_member"(auth.uid(), organization_id)
     );
 
 CREATE POLICY "Admins and editors can manage scheduled maintenances" ON public.scheduled_maintenances
     FOR ALL USING (
-        is_org_editor_or_admin(auth.uid(), organization_id)
+        "public"."is_org_editor_or_admin"(auth.uid(), organization_id)
     );
 
 -- Maintenance updates table policies
@@ -130,7 +130,7 @@ CREATE POLICY "Users can view maintenance updates in their organization" ON publ
         EXISTS (
             SELECT 1 FROM public.scheduled_maintenances
             WHERE id = maintenance_updates.scheduled_maintenance_id
-            AND is_org_member(auth.uid(), organization_id)
+            AND "public"."is_org_member"(auth.uid(), organization_id)
         )
     );
 
@@ -139,7 +139,7 @@ CREATE POLICY "Admins and editors can manage maintenance updates" ON public.main
         EXISTS (
             SELECT 1 FROM public.scheduled_maintenances
             WHERE id = maintenance_updates.scheduled_maintenance_id
-            AND is_org_editor_or_admin(auth.uid(), organization_id)
+            AND "public"."is_org_editor_or_admin"(auth.uid(), organization_id)
         )
     );
 
@@ -149,7 +149,7 @@ CREATE POLICY "Users can view services incidents in their organization" ON publi
         EXISTS (
             SELECT 1 FROM public.incidents
             WHERE id = services_incidents.incident_id
-            AND is_org_member(auth.uid(), organization_id)
+            AND "public"."is_org_member"(auth.uid(), organization_id)
         )
     );
 
@@ -158,7 +158,7 @@ CREATE POLICY "Admins and editors can manage services incidents" ON public.servi
         EXISTS (
             SELECT 1 FROM public.incidents
             WHERE id = services_incidents.incident_id
-            AND is_org_editor_or_admin(auth.uid(), organization_id)
+            AND "public"."is_org_editor_or_admin"(auth.uid(), organization_id)
         )
     );
 
@@ -168,7 +168,7 @@ CREATE POLICY "Users can view services scheduled maintenances in their organizat
         EXISTS (
             SELECT 1 FROM public.scheduled_maintenances
             WHERE id = services_scheduled_maintenances.scheduled_maintenance_id
-            AND is_org_member(auth.uid(), organization_id)
+            AND "public"."is_org_member"(auth.uid(), organization_id)
         )
     );
 
@@ -177,7 +177,7 @@ CREATE POLICY "Admins and editors can manage services scheduled maintenances" ON
         EXISTS (
             SELECT 1 FROM public.scheduled_maintenances
             WHERE id = services_scheduled_maintenances.scheduled_maintenance_id
-            AND is_org_editor_or_admin(auth.uid(), organization_id)
+            AND "public"."is_org_editor_or_admin"(auth.uid(), organization_id)
         )
     );
 
@@ -187,18 +187,18 @@ CREATE POLICY "Allow public to view specific invitation" ON public.invitations
 
 CREATE POLICY "Admins can manage invitations" ON public.invitations
     FOR ALL USING (
-        is_org_admin(auth.uid(), organization_id)
+        "public"."is_org_admin"(auth.uid(), organization_id)
     );
 
 -- Subscribers table policies
 CREATE POLICY "Users can view subscribers in their organization" ON public.subscribers
     FOR SELECT USING (
-        is_org_member(auth.uid(), organization_id)
+        "public"."is_org_member"(auth.uid(), organization_id)
     );
 
 CREATE POLICY "Admins and editors can manage subscribers" ON public.subscribers
     FOR ALL USING (
-        is_org_editor_or_admin(auth.uid(), organization_id)
+        "public"."is_org_editor_or_admin"(auth.uid(), organization_id)
     );
 
 -- Service status logs table policies
@@ -207,7 +207,7 @@ CREATE POLICY "Users can view service status logs in their organization" ON publ
         EXISTS (
             SELECT 1 FROM public.services
             WHERE id = service_status_logs.service_id
-            AND is_org_member(auth.uid(), organization_id)
+            AND "public"."is_org_member"(auth.uid(), organization_id)
         )
     );
 
@@ -216,7 +216,7 @@ CREATE POLICY "Admins and editors can manage service status logs" ON public.serv
         EXISTS (
             SELECT 1 FROM public.services
             WHERE id = service_status_logs.service_id
-            AND is_org_editor_or_admin(auth.uid(), organization_id)
+            AND "public"."is_org_editor_or_admin"(auth.uid(), organization_id)
         )
     );
 
@@ -226,7 +226,7 @@ CREATE POLICY "Users can view uptime daily logs in their organization" ON public
         EXISTS (
             SELECT 1 FROM public.services
             WHERE id = uptime_daily_logs.service_id
-            AND is_org_member(auth.uid(), organization_id)
+            AND "public"."is_org_member"(auth.uid(), organization_id)
         )
     );
 
@@ -235,7 +235,7 @@ CREATE POLICY "Admins and editors can manage uptime daily logs" ON public.uptime
         EXISTS (
             SELECT 1 FROM public.services
             WHERE id = uptime_daily_logs.service_id
-            AND is_org_editor_or_admin(auth.uid(), organization_id)
+            AND "public"."is_org_editor_or_admin"(auth.uid(), organization_id)
         )
     );
 
