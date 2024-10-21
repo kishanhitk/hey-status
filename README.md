@@ -17,6 +17,7 @@ HeyStatus is an open-source status page system designed to help teams monitor th
     - [Incident Management](#incident-management)
     - [Multi-tenant Architecture](#multi-tenant-architecture)
     - [Team Management and Permissions](#team-management-and-permissions)
+    - [Status Heatmap](#status-heatmap)
   - [Local Development Setup](#local-development-setup)
   - [Continuous Integration and Deployment (CI/CD)](#continuous-integration-and-deployment-cicd)
     - [Deployment Process](#deployment-process)
@@ -127,6 +128,27 @@ The system supports different user roles:
 3. **Viewer**: Can view the dashboard and incidents but cannot make changes.
 
 Roles are enforced through RLS policies in Supabase, ensuring data security at the database level.
+
+### Status Heatmap
+
+HeyStatus includes a Status Heatmap feature that provides a visual representation of service uptime over the past 30 days. Here's how it works:
+
+1. **Data Collection**: The system continuously logs service status changes in the `service_status_logs` table.
+
+2. **Data Processing**: When rendering the heatmap, the system:
+   - Fetches status logs for the last 30 days
+   - Calculates daily downtime for each service
+   - Determines the appropriate color for each day based on downtime duration
+
+3. **Visualization**: The heatmap is rendered as a grid, where:
+   - Each row represents a service
+   - Each column represents a day
+   - Cell colors indicate the service status (green for operational, various shades of red for issues)
+
+4. **Interactivity**: Users can hover over cells to see detailed information about service status for that specific day.
+
+This feature provides a quick, at-a-glance view of service reliability over time, helping teams identify patterns and potential issues.
+
 
 ## Local Development Setup
 
