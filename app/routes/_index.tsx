@@ -3,6 +3,7 @@ import { Globe, Bell, ArrowRight } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { DotPattern } from "~/components/ui/dot-pattern";
+import { RainbowButton } from "~/components/ui/rainbow-button";
 import { useUser } from "~/hooks/useUser";
 import { cn } from "~/lib/utils";
 import { metaGenerator } from "~/utils/metaGenerator";
@@ -60,13 +61,12 @@ export default function Component() {
               </div>
               <div className="w-full max-w-sm space-y-2">
                 <div className="flex space-x-2">
-                  <Button asChild className="w-full rounded-lg py-5 text-md">
-                    <Link to="/login">Get Started</Link>
-                  </Button>
+                  <Link to="/login" className="w-full">
+                    <RainbowButton className="w-full rounded-lg py-5 text-md">
+                      Get Started
+                    </RainbowButton>
+                  </Link>
                 </div>
-                <p className="text-xs text-gray-500">
-                  No credit card required. Start monitoring in minutes.
-                </p>
               </div>
             </div>
           </div>
