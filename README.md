@@ -40,6 +40,7 @@ HeyStatus is an open-source status page system designed to help teams monitor th
 - **Email Notifications**: Subscribers receive email notifications for incident updates.
 - **Multi-tenant Architecture**: Support for multiple organizations.
 - **Analytics**: View uptime statistics and incident history.
+- **JSON API**: Access organization status data programmatically via a JSON API endpoint (e.g., `https://hey-status.pages.dev/api/apple/status`).
 
 ## Tech Stack
 
@@ -165,6 +166,21 @@ HeyStatus employs a hybrid approach to data fetching, combining Remix loaders wi
 - Provides caching, background updates, and real-time synchronization
 - Seamlessly integrates with Remix by using the loader data as initial query data
 
+
+### JSON API
+
+HeyStatus provides a JSON API endpoint for programmatic access to organization status data:
+
+- **Endpoint**: `/api/:organizationSlug/status` (e.g., `https://hey-status.pages.dev/api/apple/status`)
+- **Method**: GET
+- **Response**: JSON object containing:
+  - Organization details
+  - Overall status
+  - List of services with their current status
+  - Active incidents
+  - Upcoming scheduled maintenances
+
+This API allows developers to integrate HeyStatus data into their own applications or monitoring systems easily. The data is cached for 60 seconds to reduce database load for frequent requests.
 
 ## Local Development Setup
 
