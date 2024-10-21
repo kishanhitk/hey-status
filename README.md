@@ -2,6 +2,7 @@
 
 HeyStatus is an open-source status page system designed to help teams monitor their services and communicate effectively with users about incidents and maintenance. Built with modern web technologies, it offers real-time updates, customizable status pages, and comprehensive incident management features.
 
+![HeyStatus Public Status Page](./public/images/status-page-example.png)
 ![HeyStatus Dashboard](./public/images/dashboard-example.png)
 
 ## Table of Contents
@@ -16,16 +17,17 @@ HeyStatus is an open-source status page system designed to help teams monitor th
     - [Incident Management](#incident-management)
     - [Multi-tenant Architecture](#multi-tenant-architecture)
     - [Team Management and Permissions](#team-management-and-permissions)
-  - [Setup Guide](#setup-guide)
+  - [Local Development Setup](#local-development-setup)
   - [License](#license)
 
 ## Features
 
 - **Customizable Status Pages**: Create public-facing status pages for your services.
 - **Service Management**: Add, update, and monitor multiple services.
-- **Incident Management**: Create, update, and resolve incidents efficiently.
+- **Incident Management**: Create, update, and resolve incidents efficiently. Add updated to existing services with public message.
+- **Automatic Service Status Updates**: Based on incident status and impact HeyStatus intelligently suggest status for related systems.
 - **Scheduled Maintenance**: Plan and communicate scheduled maintenance to users.
-- **Real-time Updates**: Status changes are pushed to users in real-time via WebSocket.
+- **Real-time Updates**: Status changes are pushed to public status page in real-time via WebSocket.
 - **Team Collaboration**: Invite team members and manage roles (Admin, Editor, Viewer).
 - **Email Notifications**: Subscribers receive email notifications for incident updates.
 - **Multi-tenant Architecture**: Support for multiple organizations.
@@ -41,6 +43,7 @@ HeyStatus is an open-source status page system designed to help teams monitor th
 - **Form Handling**: React Hook Form with Zod validation
 - **Authentication**: Supabase Auth (Google OAuth)
 - **Deployment**: Cloudflare Pages (frontend) and Supabase (backend)
+- **Subscriber Emails**: Resend
 
 ## Architecture
 
@@ -58,7 +61,7 @@ HeyStatus follows a modern serverless architecture:
 
 4. **API**: The frontend communicates with Supabase using the `@supabase/supabase-js` client library.
 
-5. **State Management**: React Query is used for server state management, providing caching and synchronization.
+5. **State Management**: React Query is used for data state management, providing caching and synchronization.
 
 6. **Email Notifications**: A Supabase Edge Function integrates with Resend for sending email notifications.
 
@@ -68,9 +71,10 @@ HeyStatus follows a modern serverless architecture:
 
 Real-time updates are implemented using Supabase's Realtime feature:
 
-1. The frontend subscribes to relevant tables (e.g., `services`, `incidents`) using Supabase's `subscribe()` method.
-2. When data changes in these tables, Supabase sends events to the subscribed clients.
-3. React Query's `useQuery` hook is configured to refetch data when these events are received, updating the UI in real-time.
+1. The page is initally rendered on server with the latest data and sent to client. This is to ensure that initial page load is fast, prepopulated with data and SEO optimized.
+2. On client, react takes over and subscribes to relevant tables (e.g., `services`, `incidents`) using Supabase's `subscribe()` method.
+3. When data changes in these tables, Supabase sends events to the subscribed clients.
+4. `useEffect` hook is configured to update the local state when these events are received, updating the UI in real-time.
 ```
 useEffect(() => {
   const subscription = supabase
@@ -80,7 +84,6 @@ useEffect(() => {
       { event: "", schema: "public", table: "services" },
       (payload) => {
         // Handle the change
-        queryClient.invalidateQueries(["services"]);
       }
     )
     .subscribe();
@@ -119,51 +122,58 @@ The system supports different user roles:
 
 Roles are enforced through RLS policies in Supabase, ensuring data security at the database level.
 
-## Setup Guide
+## Local Development Setup
 
 1. **Prerequisites**:
    - Node.js (v18 or later)
-   - pnpm
+   - Bun (recommended) or npm
    - Supabase CLI
-   - Cloudflare account (for deployment)
+   - Git
+   - Docker (recommended OrbStack)
 
 2. **Clone the repository**:
    ```
-   git clone https://github.com/your-username/hey-status.git
+   git clone https://github.com/kishanthik/hey-status.git
    cd hey-status
    ```
 
 3. **Install dependencies**:
+   With Bun (recommended):
    ```
-   pnpm install
+   bun install
+   ```
+   Or with npm:
+   ```
+   npm install
    ```
 
-4. **Set up Supabase**:
-   - Create a new Supabase project
-   - Run the SQL migrations in the `supabase/migrations` directory
-   - Set up the Supabase Edge Functions in the `supabase/functions` directory
+4. **Set up Supabase locally**:
+   - Make sure docker is installed on your system.
+   - Install Supabase CLI: `brew install supabase/tap/supabase`
+   - Start Supabase: `supabase start`
+   - This will create a local Supabase instance and apply migrations
+   - Run edge functions locally using: `supabase functions serve`
 
 5. **Configure environment variables**:
-   - Copy `.env.example` to `.env`
-   - Fill in the required Supabase and other API keys
-
+   - Copy `.dev.vars.example` to `.dev.vars`
+   - Update the Supabase URL and anon key with the values provided by `supabase start`
+   - For email sending edge functions: copy `/supabase/functions/.env.example` to `/supabase/functions/.env`
+   - Add Resend API key in it.
 6. **Run the development server**:
+   With Bun:
    ```
-   pnpm dev
+   bun run dev
+   ```
+   Or with npm:
+   ```
+   npm run dev
    ```
 
-7. **Build for production**:
-   ```
-   pnpm build
-   ```
+7. **Open the application**:
+   Visit `http://localhost:5173` in your browser
 
-8. **Deploy**:
-   - Set up a Cloudflare Pages project
-   - Configure the build settings to use `pnpm build`
-   - Set the necessary environment variables in Cloudflare Pages
 
-For detailed deployment instructions, please refer to the [Deployment Guide](./DEPLOYMENT.md).
-
+Now you have HeyStatus running locally on your machine!
 ## License
 
 HeyStatus is open-source software licensed under the MIT license.
