@@ -16,6 +16,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { metaGenerator } from "~/utils/metaGenerator";
+import { Loader2 } from "lucide-react";
 
 const updateOrgSchema = z.object({
   name: z
@@ -106,7 +107,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
 export default function Settings() {
   const { organization } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
-  const { user } = useUser();
+  const { user, loading } = useUser();
 
   const {
     register,
@@ -140,6 +141,14 @@ export default function Settings() {
       });
     }
   });
+
+  if (loading) {
+    return (
+      <div className="p-8 flex justify-center items-center">
+        <Loader2 className="h-4 w-4 animate-spin" />
+      </div>
+    );
+  }
 
   if (user?.profile?.role !== "admin") {
     return (
