@@ -190,6 +190,12 @@ CREATE POLICY "Admins can manage invitations" ON public.invitations
         "public"."is_org_admin"(auth.uid(), organization_id)
     );
 
+-- New policy to allow invited users to delete their own invitation
+CREATE POLICY "Invited users can delete their own invitation" ON public.invitations
+    FOR DELETE USING (
+        email = (SELECT email FROM auth.users WHERE id = auth.uid())
+    );
+
 -- Subscribers table policies
 CREATE POLICY "Users can view subscribers in their organization" ON public.subscribers
     FOR SELECT USING (
