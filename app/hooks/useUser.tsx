@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useSupabase } from "./useSupabase";
 import { Database } from "~/types/supabase";
 import { User } from "@supabase/supabase-js";
@@ -11,40 +11,37 @@ type UserWithProfile = User & {
 
 export function useUser() {
   const supabase = useSupabase();
-  const [user, setUser] = useState<UserWithProfile | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      setLoading(true);
+  const { data: user, isLoading } = useQuery<UserWithProfile | null>({
+    queryKey: ["user"],
+    queryFn: async () => {
       const {
         data: { user: authUser },
       } = await supabase.auth.getUser();
-      if (authUser) {
-        const { data, error } = await supabase
-          .from("users")
-          .select("*, organization:organization_id(*)")
-          .eq("id", authUser.id)
-          .single();
 
-        if (error) {
-          console.error("Error fetching user data:", error);
-          return;
-        }
+      if (!authUser) return null;
 
-        setUser({
-          ...authUser,
-          profile: {
-            ...data,
-            organization: data.organization || null,
-          },
-        });
+      const { data, error } = await supabase
+        .from("users")
+        .select("*, organization:organization_id(*)")
+        .eq("id", authUser.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching user data:", error);
+        throw error;
       }
-      setLoading(false);
-    };
 
-    fetchUser();
-  }, [supabase]);
+      return {
+        ...authUser,
+        profile: {
+          ...data,
+          organization: data.organization || null,
+        },
+      };
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
-  return { user, loading };
+  return { user, loading: isLoading };
 }
