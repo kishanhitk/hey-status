@@ -4,6 +4,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { DotPattern } from "~/components/ui/dot-pattern";
 import { RainbowButton } from "~/components/ui/rainbow-button";
+import ShinyButton from "~/components/ui/shiny-button";
 import { useUser } from "~/hooks/useUser";
 import { cn } from "~/lib/utils";
 import { metaGenerator } from "~/utils/metaGenerator";
@@ -50,7 +51,15 @@ export default function Component() {
           <div className="container relative z-10">
             <div className="flex flex-col items-center space-y-8 text-center">
               <div className="space-y-5">
-                <Badge variant="outline">Open Source</Badge>
+                <a
+                  href="https://github.com/kishanhitk/hey-status"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ShinyButton className="rounded-full" textClassName="text-xs">
+                    Proudly Open Source
+                  </ShinyButton>
+                </a>
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none">
                   Monitor your services with ease
                 </h1>
