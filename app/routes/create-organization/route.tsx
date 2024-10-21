@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, MetaFunction, Link } from "@remix-run/react";
+import { useNavigate, MetaFunction, Link, redirect } from "@remix-run/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -29,6 +29,8 @@ import {
 import DotPattern from "~/components/ui/dot-pattern";
 import { cn } from "~/lib/utils";
 import { Globe, Loader2 } from "lucide-react";
+import { createServerSupabase } from "~/utils/supabase.server";
+import { LoaderFunctionArgs } from "@remix-run/cloudflare";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -52,6 +54,30 @@ export const meta: MetaFunction = () => {
       "Set up your new organization to start monitoring your services.",
   });
 };
+
+export async function loader({ request, context }: LoaderFunctionArgs) {
+  const env = context.cloudflare.env;
+  const { supabase } = createServerSupabase(request, env);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return redirect("/login");
+  }
+
+  const { data: userProfile } = await supabase
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+
+  if (userProfile?.organization_id) {
+    return redirect("/dashboard");
+  }
+
+  return null;
+}
 
 export default function CreateOrganization() {
   const [isLoading, setIsLoading] = useState(false);
@@ -102,6 +128,7 @@ export default function CreateOrganization() {
         description: "You must be logged in to create an organization.",
         variant: "destructive",
       });
+      navigate("/login");
       return;
     }
 
@@ -193,7 +220,7 @@ export default function CreateOrganization() {
                         <Input placeholder="Acme Inc." {...field} />
                       </FormControl>
                       <FormDescription>
-                        This is your organization's display name.
+                        This is your organization&apos;s display name.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

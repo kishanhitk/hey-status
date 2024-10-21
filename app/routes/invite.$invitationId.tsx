@@ -4,12 +4,11 @@ import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
 import { useUser } from "~/hooks/useUser";
 import { useMutation } from "@tanstack/react-query";
-import * as z from "zod";
 import { Button } from "~/components/ui/button";
 import { toast } from "~/hooks/use-toast";
 import DotPattern from "~/components/ui/dot-pattern";
 import { cn } from "~/lib/utils";
-import { Globe, Loader2 } from "lucide-react";
+import { Globe, Loader2, LogOut } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -26,7 +25,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     throw new Response("Invitation ID is required", { status: 400 });
   }
 
-  const { data: invitation, error } = await supabase
+  const { data: invitation, error: invitationError } = await supabase
     .from("invitations")
     .select(
       `
@@ -38,22 +37,41 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     .eq("id", invitationId)
     .single();
 
-  if (error || !invitation) {
+  if (invitationError || !invitation) {
     throw new Response("Invitation not found", { status: 404 });
   }
 
   if (new Date(invitation.expires_at) < new Date()) {
-    throw new Response("Invitation has expired", { status: 410 });
+    return json({ invitation, error: "expired" });
   }
 
-  return json({ invitation });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let error = null;
+  if (user) {
+    const { data: userProfile } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (userProfile?.organization_id) {
+      error = "already_in_org";
+    } else if (invitation.email !== user.email) {
+      error = "email_mismatch";
+    }
+  }
+
+  return json({ invitation, user, error });
 }
 
 export default function AcceptInvitation() {
-  const { invitation } = useLoaderData<typeof loader>();
+  const { invitation, user, error } = useLoaderData<typeof loader>();
   const supabase = useSupabase();
   const navigate = useNavigate();
-  const { user, loading: isUserLoading } = useUser();
+  const { loading: isUserLoading } = useUser();
 
   const acceptInvitationMutation = useMutation({
     mutationFn: async () => {
@@ -85,6 +103,11 @@ export default function AcceptInvitation() {
       });
     },
   });
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
 
   if (isUserLoading) {
     return (
@@ -118,39 +141,71 @@ export default function AcceptInvitation() {
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Accept Invitation</CardTitle>
+            <CardTitle>Invitation Details</CardTitle>
             <CardDescription>
               <span className="font-semibold">
                 {invitation.created_by.full_name}
               </span>{" "}
               has invited you to join{" "}
               <span className="font-semibold">
-                {invitation.organizations?.name}
+                {invitation.organizations.name}
               </span>{" "}
               as a <span className="font-semibold">{invitation.role}</span>
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {user ? (
+            {error === "expired" ? (
+              <p className="text-red-500">This invitation has expired.</p>
+            ) : error === "already_in_org" ? (
+              <div className="space-y-4">
+                <p className="text-red-500">
+                  You are already part of an organization. Please log out to
+                  accept this invitation with a different account.
+                </p>
+                <Button onClick={handleLogout} className="w-full">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log Out
+                </Button>
+              </div>
+            ) : error === "email_mismatch" ? (
+              <div className="space-y-4">
+                <p className="text-red-500">
+                  This invitation is not for your current email address. Please
+                  log out and sign in with the correct email.
+                </p>
+                <Button onClick={handleLogout} className="w-full">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log Out
+                </Button>
+              </div>
+            ) : user ? (
               <Button
                 onClick={() => acceptInvitationMutation.mutate()}
                 className="w-full"
                 disabled={acceptInvitationMutation.isPending}
               >
-                {acceptInvitationMutation.isPending
-                  ? "Accepting..."
-                  : "Accept Invitation"}
+                {acceptInvitationMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Accepting...
+                  </>
+                ) : (
+                  "Accept Invitation"
+                )}
               </Button>
             ) : (
-              <Button asChild className="w-full">
-                <Link
-                  to={`/login?redirect=${encodeURIComponent(
-                    `/invite/${invitation.id}`
-                  )}`}
-                >
-                  Login to accept invitation
-                </Link>
-              </Button>
+              <div className="space-y-4">
+                <p>Please log in to accept this invitation.</p>
+                <Button asChild className="w-full">
+                  <Link
+                    to={`/login?redirect=${encodeURIComponent(
+                      `/invite/${invitation.id}`
+                    )}`}
+                  >
+                    Log In
+                  </Link>
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
