@@ -3,10 +3,12 @@ import { useSupabase } from "./useSupabase";
 import { Database } from "~/types/supabase";
 import { User } from "@supabase/supabase-js";
 
+type Profile = Database["public"]["Tables"]["users"]["Row"] & {
+  organization: Database["public"]["Tables"]["organizations"]["Row"] | null;
+};
+
 type UserWithProfile = User & {
-  profile: Database["public"]["Tables"]["users"]["Row"] & {
-    organization: Database["public"]["Tables"]["organizations"]["Row"] | null;
-  };
+  profile: Profile;
 };
 
 export function useUser() {
@@ -32,12 +34,14 @@ export function useUser() {
         throw error;
       }
 
+      const profile: Profile = {
+        ...data,
+        organization: data.organization || null,
+      };
+
       return {
         ...authUser,
-        profile: {
-          ...data,
-          organization: data.organization || null,
-        },
+        profile,
       };
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
