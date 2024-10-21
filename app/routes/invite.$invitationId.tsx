@@ -9,15 +9,14 @@ import { Button } from "~/components/ui/button";
 import { toast } from "~/hooks/use-toast";
 import DotPattern from "~/components/ui/dot-pattern";
 import { cn } from "~/lib/utils";
-
-const acceptInvitationSchema = z.object({
-  fullName: z
-    .string()
-    .min(2, { message: "Full name must be at least 2 characters" }),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters" }),
-});
+import { Globe, Loader2 } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { invitationId } = params;
@@ -54,46 +53,21 @@ export default function AcceptInvitation() {
   const { invitation } = useLoaderData<typeof loader>();
   const supabase = useSupabase();
   const navigate = useNavigate();
-  const { user, isLoading: isUserLoading } = useUser();
+  const { user, loading: isUserLoading } = useUser();
 
   const acceptInvitationMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof acceptInvitationSchema>) => {
-      if (!user) {
-        const { data: authData, error: signUpError } =
-          await supabase.auth.signUp({
-            email: invitation.email,
-            password: values.password,
-            options: {
-              data: {
-                full_name: values.fullName,
-                organization_id: invitation.organization_id,
-              },
-            },
-          });
+    mutationFn: async () => {
+      if (!user) throw new Error("User not logged in");
 
-        if (signUpError) throw signUpError;
-
-        const { error: insertError } = await supabase.from("users").insert({
-          id: authData.user?.id,
-          email: invitation.email,
-          full_name: values.fullName,
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({
           organization_id: invitation.organization_id,
           role: invitation.role,
-        });
+        })
+        .eq("id", user.id);
 
-        if (insertError) throw insertError;
-      } else {
-        // If user is already logged in, just update their organization
-        const { error: updateError } = await supabase
-          .from("users")
-          .update({
-            organization_id: invitation.organization_id,
-            role: invitation.role,
-          })
-          .eq("id", user.id);
-
-        if (updateError) throw updateError;
-      }
+      if (updateError) throw updateError;
 
       await supabase.from("invitations").delete().eq("id", invitation.id);
 
@@ -113,11 +87,15 @@ export default function AcceptInvitation() {
   });
 
   if (isUserLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 relative">
       <DotPattern
         width={20}
         height={20}
@@ -128,47 +106,54 @@ export default function AcceptInvitation() {
           "[mask-image:radial-gradient(800px_circle_at_center,white,transparent)]"
         )}
       />
-      <div className="max-w-lg w-full space-y-8 bg-white/10 p-12 rounded-lg backdrop-blur-sm shadow-lg">
+      <div className="max-w-md w-full space-y-8 relative z-10">
         <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900 mb-4">
-            Accept Invitation
-          </h2>
-
-          <p className="mt-2 text-center text-sm text-gray-600">
-            <span className="font-bold">{invitation.created_by.full_name}</span>{" "}
-            has invited you to join{" "}
-            <span className="font-bold"> {invitation.organizations.name} </span>{" "}
-            as a <span className="font-bold"> {invitation.role}</span>
-          </p>
-        </div>
-        {user ? (
-          <Button
-            onClick={() =>
-              acceptInvitationMutation.mutate({
-                fullName: user.user_metadata.full_name,
-                password: "",
-              })
-            }
-            className="w-full"
-            disabled={acceptInvitationMutation.isPending}
+          <Link
+            to="/"
+            className="flex items-center justify-center text-black mb-6"
           >
-            {acceptInvitationMutation.isPending
-              ? "Accepting..."
-              : "Accept Invitation"}
-          </Button>
-        ) : (
-          <>
-            <Button asChild className="mt-4 text-center mx-auto w-full">
-              <Link
-                to={`/login?redirect=${encodeURIComponent(
-                  `/invite/${invitation.id}`
-                )}`}
+            <Globe className="h-8 w-8 mr-2" />
+            <span className="text-2xl font-bold">HeyStatus</span>
+          </Link>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Accept Invitation</CardTitle>
+            <CardDescription>
+              <span className="font-semibold">
+                {invitation.created_by.full_name}
+              </span>{" "}
+              has invited you to join{" "}
+              <span className="font-semibold">
+                {invitation.organizations?.name}
+              </span>{" "}
+              as a <span className="font-semibold">{invitation.role}</span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {user ? (
+              <Button
+                onClick={() => acceptInvitationMutation.mutate()}
+                className="w-full"
+                disabled={acceptInvitationMutation.isPending}
               >
-                Login to accept invitation
-              </Link>
-            </Button>
-          </>
-        )}
+                {acceptInvitationMutation.isPending
+                  ? "Accepting..."
+                  : "Accept Invitation"}
+              </Button>
+            ) : (
+              <Button asChild className="w-full">
+                <Link
+                  to={`/login?redirect=${encodeURIComponent(
+                    `/invite/${invitation.id}`
+                  )}`}
+                >
+                  Login to accept invitation
+                </Link>
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

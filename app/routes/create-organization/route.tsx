@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, MetaFunction } from "@remix-run/react";
+import { useNavigate, MetaFunction, Link } from "@remix-run/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,6 +19,16 @@ import { Input } from "~/components/ui/input";
 import { toast } from "~/hooks/use-toast";
 import { metaGenerator } from "~/utils/metaGenerator";
 import { useDebounce } from "~/hooks/useDebounce";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import DotPattern from "~/components/ui/dot-pattern";
+import { cn } from "~/lib/utils";
+import { Globe, Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -139,61 +149,102 @@ export default function CreateOrganization() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="w-full max-w-md space-y-6"
-        >
-          <h1 className="text-2xl font-bold">Create Your Organization</h1>
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Organization Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Acme Inc." {...field} />
-                </FormControl>
-                <FormDescription>
-                  This is your organization's display name.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="slug"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Organization Slug</FormLabel>
-                <FormControl>
-                  <Input placeholder="acme-inc" {...field} />
-                </FormControl>
-                <FormDescription>
-                  This will be used in URLs and API requests.
-                </FormDescription>
-                {debouncedSlug.length >= 2 && (
-                  <p
-                    className={
-                      isSlugAvailable ? "text-green-600" : "text-red-600"
-                    }
-                  >
-                    {isSlugAvailable
-                      ? "✓ Slug is available"
-                      : "✗ Slug is not available"}
-                  </p>
-                )}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" disabled={isLoading || !isSlugAvailable}>
-            {isLoading ? "Creating..." : "Create Organization"}
-          </Button>
-        </form>
-      </Form>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 relative">
+      <DotPattern
+        width={20}
+        height={20}
+        cx={5}
+        cy={5}
+        cr={1}
+        className={cn(
+          "[mask-image:radial-gradient(800px_circle_at_center,white,transparent)]"
+        )}
+      />
+      <div className="max-w-md w-full space-y-8 relative z-10">
+        <div>
+          <Link
+            to="/"
+            className="flex items-center justify-center text-black mb-6"
+          >
+            <Globe className="h-8 w-8 mr-2" />
+            <span className="text-2xl font-bold">HeyStatus</span>
+          </Link>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Create Your Organization</CardTitle>
+            <CardDescription>
+              Set up your new organization to start monitoring your services.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Organization Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Acme Inc." {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        This is your organization's display name.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="slug"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Organization Slug</FormLabel>
+                      <FormControl>
+                        <Input placeholder="acme-inc" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        This will be used in URLs and API requests.
+                      </FormDescription>
+                      {debouncedSlug.length >= 2 && (
+                        <p
+                          className={
+                            isSlugAvailable ? "text-green-600" : "text-red-600"
+                          }
+                        >
+                          {isSlugAvailable
+                            ? "✓ Slug is available"
+                            : "✗ Slug is not available"}
+                        </p>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading || !isSlugAvailable}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Organization"
+                  )}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
