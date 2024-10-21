@@ -31,6 +31,8 @@ RETURNS boolean AS $$
   );
 $$ LANGUAGE sql SECURITY DEFINER;
 
+
+
 -- Enable RLS on all tables
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
@@ -50,11 +52,10 @@ ALTER TABLE public.uptime_daily_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own profile" ON public.users
     FOR SELECT USING (auth.uid() = id);
 
--- Users can update their own profile (except role)
+-- Users can update their own profile
 CREATE POLICY "Users can update their own profile" ON public.users
     FOR UPDATE USING (auth.uid() = id)
-    WITH CHECK (auth.uid() = id AND OLD.role = NEW.role);
-
+    WITH CHECK (auth.uid() = id);
 -- Admins can update any user in their organization, including roles
 CREATE POLICY "Admins can update users in their organization" ON public.users
     FOR UPDATE USING (
@@ -201,11 +202,7 @@ CREATE POLICY "Admins can manage invitations" ON public.invitations
         "public"."is_org_admin"(auth.uid(), organization_id)
     );
 
--- New policy to allow invited users to delete their own invitation
-CREATE POLICY "Invited users can delete their own invitation" ON public.invitations
-    FOR DELETE USING (
-        email = (SELECT email FROM auth.users WHERE id = auth.uid())
-    );
+
 
 -- Subscribers table policies
 CREATE POLICY "Users can view subscribers in their organization" ON public.subscribers
