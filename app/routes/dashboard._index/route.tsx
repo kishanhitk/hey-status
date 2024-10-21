@@ -84,7 +84,7 @@ export default function DashboardIndex() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-3xl font-bold">Home</h1>
           <p className="text-sm text-gray-500 mt-1 max-w-lg">
             Overview of your services and incidents.
           </p>
