@@ -1,10 +1,9 @@
 import { Link, MetaFunction } from "@remix-run/react";
-import { Globe, Bell, ServerCrash } from "lucide-react";
+import { ServerCrash, Check, MailIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { DotPattern } from "~/components/ui/dot-pattern";
 import { RainbowButton } from "~/components/ui/rainbow-button";
 import ShinyButton from "~/components/ui/shiny-button";
-import { useUser } from "~/hooks/useUser";
 import { cn } from "~/lib/utils";
 import { metaGenerator } from "~/utils/metaGenerator";
 import { BentoCard, BentoGrid } from "~/components/ui/bento-grid";
@@ -12,48 +11,27 @@ import {
   BellIcon,
   CalendarIcon,
   FileTextIcon,
-  GlobeIcon,
   InputIcon,
 } from "@radix-ui/react-icons";
-import { MailIcon } from "lucide-react";
+
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "~/components/ui/card";
+import { LandingHeader } from "~/components/landing-header";
 
 export const meta: MetaFunction = () => {
   return metaGenerator({});
 };
 
 export default function Component() {
-  const { user } = useUser();
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="h-14 flex items-center container">
-        <Link className="flex items-center justify-center" to="/">
-          <Globe className="h-6 w-6" />
-          <span className="ml-2 text-xl font-bold">HeyStatus</span>
-        </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link
-            className="text-sm font-medium hover:underline underline-offset-4"
-            to="#features"
-          >
-            Features
-          </Link>
-          <Link
-            className="text-sm font-medium hover:underline underline-offset-4"
-            to="#pricing"
-          >
-            Pricing
-          </Link>
-        </nav>
-        {user ? (
-          <Button asChild className="ml-4" variant="outline">
-            <Link to="/dashboard">Dashboard</Link>
-          </Button>
-        ) : (
-          <Button asChild className="ml-4" variant="outline">
-            <Link to="/login">Login</Link>
-          </Button>
-        )}
-      </header>
+    <div className="min-h-screen">
+      <LandingHeader />
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-28 xl:py-28 relative">
           <div className="container relative z-10">
@@ -100,52 +78,25 @@ export default function Component() {
             cy={5}
             cr={1}
             className={cn(
-              "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]"
+              "[mask-image:radial-gradient(800px_circle_at_center,white,transparent)]"
             )}
           />
         </section>
-        <section id="features" className="w-full py-12 md:py-24 lg:py-32">
+        <section id="features" className="w-full py-12 md:py-18">
           <div className="container px-4 md:px-6">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl mb-8 text-center">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-center">
               Features
             </h2>
+            <p className="max-w-[600px] text-gray-500 md:text-xl text-center mx-auto mt-2 mb-8">
+              HeyStatus is a powerful status page tool that allows you to
+              monitor your services and keep your users informed.
+            </p>
             <FeaturesBentoGrid />
           </div>
         </section>
-
-        <section id="pricing" className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
-                  Simple, Transparent Pricing
-                </h2>
-                <p className="max-w-[600px] text-gray-500 md:text-xl">
-                  Start monitoring your services for free. Upgrade as you grow.
-                </p>
-              </div>
-              <div className="w-full max-w-sm space-y-2">
-                <Button asChild className="w-full">
-                  <Link to="/login">Get Started for Free</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
+        <PricingSection />
       </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
-        <p className="text-xs text-gray-500">
-          © 2024 HeyStatus Inc. All rights reserved.
-        </p>
-        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-          <Link className="text-xs hover:underline underline-offset-4" to="#">
-            Terms of Service
-          </Link>
-          <Link className="text-xs hover:underline underline-offset-4" to="#">
-            Privacy
-          </Link>
-        </nav>
-      </footer>
+      <Footer />
     </div>
   );
 }
@@ -155,12 +106,12 @@ const features = [
     Icon: FileTextIcon,
     name: "Status Pages",
     description: "Create customizable status pages to display service health.",
-    href: "/",
-    cta: "Learn more",
+    href: "/login",
+    cta: "Get Started",
     background: (
       <img
         src="/images/status-page-example.png"
-        className="absolute right-0 top-10 opacity-60"
+        className="absolute right-0 top-10 opacity-60 group-hover:scale-105 transition-all duration-300"
         alt="Status Page"
       />
     ),
@@ -170,12 +121,12 @@ const features = [
     Icon: InputIcon,
     name: "Service Management",
     description: "Easily add, update, and monitor multiple services.",
-    href: "/",
-    cta: "Learn more",
+    href: "/login",
+    cta: "Get Started",
     background: (
       <img
-        src="/images/service-management-bg.png"
-        className="absolute -right-20 -top-20 opacity-60"
+        src="/images/dashboard-example.png"
+        className="absolute right-0 -top-20 opacity-60 group-hover:scale-105 transition-all duration-300 group-hover:-top-15"
         alt="Service Management"
       />
     ),
@@ -185,8 +136,8 @@ const features = [
     Icon: CalendarIcon,
     name: "Manage Maintenance",
     description: "Plan and communicate scheduled maintenance to your users.",
-    href: "/",
-    cta: "Learn more",
+    href: "/login",
+    cta: "Get Started",
     background: (
       <img
         src="/images/manage-maintenance-bg.png"
@@ -200,8 +151,8 @@ const features = [
     Icon: ServerCrash,
     name: "Incident Management",
     description: "Create, update, and resolve incidents efficiently.",
-    href: "/",
-    cta: "Learn more",
+    href: "/login",
+    cta: "Get Started",
     background: (
       <img
         src="/images/incident-management-bg.png"
@@ -215,8 +166,8 @@ const features = [
     Icon: BellIcon,
     name: "Real-time Updates",
     description: "Updates are pushed to users in real-time via WebSocket.",
-    href: "/",
-    cta: "Learn more",
+    href: "/login",
+    cta: "Get Started",
     background: (
       <img
         src="/images/real-time-updates-bg.png"
@@ -231,8 +182,8 @@ const features = [
     name: "Email Subscriptions",
     description:
       "Subscribers receive email notifications for incident updates.",
-    href: "/",
-    cta: "Learn more",
+    href: "/login",
+    cta: "Get Started",
     background: (
       <img
         src="/images/email-subscriptions-bg.png"
@@ -251,5 +202,111 @@ function FeaturesBentoGrid() {
         <BentoCard key={feature.name} {...feature} />
       ))}
     </BentoGrid>
+  );
+}
+
+const pricingPlans = [
+  {
+    name: "Starter",
+    price: "$0",
+    description: "Best for small teams and startups",
+    features: [
+      "Up to 5 services",
+      "1 team member",
+      "Public status page",
+      "Email notifications",
+      "5 subscribers",
+      "7 days data retention",
+    ],
+    buttonVariant: "outline",
+  },
+  {
+    name: "Pro",
+    price: "$99",
+    description: "Perfect for growing businesses",
+    features: [
+      "Unlimited services",
+      "Unlimited team members",
+      "Custom domain",
+      "Email & SMS notifications",
+      "Unlimited subscribers",
+      "30 days data retention",
+      "Priority support",
+    ],
+    buttonVariant: "default",
+  },
+];
+
+export function PricingSection() {
+  return (
+    <section
+      id="pricing"
+      className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-t from-gray-50 to-white"
+    >
+      <div className="container px-4 md:px-6">
+        <div className="flex flex-col items-center justify-center space-y-4 text-center">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="max-w-[600px] text-gray-500 md:text-xl">
+              Start monitoring your services with our flexible plans. Upgrade as
+              you grow.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-6 mt-8 md:grid-cols-2 md:gap-8">
+          {pricingPlans.map((plan) => (
+            <Card key={plan.name} className="flex flex-col justify-between">
+              <CardHeader>
+                <CardTitle>{plan.name}</CardTitle>
+                <CardDescription>{plan.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold mb-4">
+                  {plan.price}
+                  <span className="text-xl font-normal">/month</span>
+                </div>
+                <ul className="space-y-2">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-center">
+                      <Check className="mr-2 h-4 w-4 text-green-500" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  asChild
+                  className="w-full"
+                  variant={plan.buttonVariant as "default" | "outline"}
+                >
+                  <Link to="/login">Get Started</Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function Footer() {
+  return (
+    <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center container">
+      <p className="text-xs text-gray-500">
+        © 2024 HeyStatus Inc. All rights reserved.
+      </p>
+      <nav className="sm:ml-auto flex gap-4 sm:gap-6">
+        <Link className="text-xs hover:underline underline-offset-4" to="#">
+          Terms of Service
+        </Link>
+        <Link className="text-xs hover:underline underline-offset-4" to="#">
+          Privacy
+        </Link>
+      </nav>
+    </footer>
   );
 }

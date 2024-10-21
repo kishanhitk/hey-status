@@ -7,6 +7,7 @@ export default {
     extend: {
       container: {
         center: true,
+        padding: "1rem",
       },
       gridTemplateColumns: {
         "31": "repeat(31, minmax(0, 1fr))",
