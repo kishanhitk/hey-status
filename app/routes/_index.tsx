@@ -110,8 +110,8 @@ const features = [
     cta: "Get Started",
     background: (
       <img
-        src="/images/status-page-example.png"
-        className="absolute right-0 top-10 opacity-60 group-hover:scale-105 transition-all duration-300"
+        src="/images/status-page-example-cropped.png"
+        className="absolute right-0 -top-10 opacity-60 group-hover:scale-105 transition-all duration-300"
         alt="Status Page"
       />
     ),
