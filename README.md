@@ -18,6 +18,7 @@ HeyStatus is an open-source status page system designed to help teams monitor th
     - [Multi-tenant Architecture](#multi-tenant-architecture)
     - [Team Management and Permissions](#team-management-and-permissions)
     - [Status Heatmap](#status-heatmap)
+    - [Data Fetching Strategy](#data-fetching-strategy)
   - [Local Development Setup](#local-development-setup)
   - [Continuous Integration and Deployment (CI/CD)](#continuous-integration-and-deployment-cicd)
     - [Deployment Process](#deployment-process)
@@ -148,6 +149,21 @@ HeyStatus includes a Status Heatmap feature that provides a visual representatio
 4. **Interactivity**: Users can hover over cells to see detailed information about service status for that specific day.
 
 This feature provides a quick, at-a-glance view of service reliability over time, helping teams identify patterns and potential issues.
+
+### Data Fetching Strategy
+
+HeyStatus employs a hybrid approach to data fetching, combining Remix loaders with React Query for optimal performance and user experience:
+
+**Remix Loaders**
+- Used for initial data fetching on the server side
+- Ensures that the initial page load is fast and comes pre-populated with data
+- Improves SEO as the content is available in the initial HTML
+
+
+**React Query**
+- Used for client-side data fetching and state management
+- Provides caching, background updates, and real-time synchronization
+- Seamlessly integrates with Remix by using the loader data as initial query data
 
 
 ## Local Development Setup
