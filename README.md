@@ -19,6 +19,7 @@ HeyStatus is an open-source status page system designed to help teams monitor th
     - [Team Management and Permissions](#team-management-and-permissions)
     - [Status Heatmap](#status-heatmap)
     - [Data Fetching Strategy](#data-fetching-strategy)
+    - [JSON API](#json-api)
   - [Local Development Setup](#local-development-setup)
   - [Continuous Integration and Deployment (CI/CD)](#continuous-integration-and-deployment-cicd)
     - [Deployment Process](#deployment-process)
