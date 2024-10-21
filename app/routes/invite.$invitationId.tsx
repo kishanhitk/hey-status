@@ -3,7 +3,7 @@ import { useLoaderData, useNavigate, Link } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { useSupabase } from "~/hooks/useSupabase";
 import { useUser } from "~/hooks/useUser";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import { toast } from "~/hooks/use-toast";
 import DotPattern from "~/components/ui/dot-pattern";
@@ -71,6 +71,7 @@ export default function AcceptInvitation() {
   const supabase = useSupabase();
   const navigate = useNavigate();
   const { loading: isUserLoading } = useUser();
+  const queryClient = useQueryClient();
 
   const acceptInvitationMutation = useMutation({
     mutationFn: async () => {
@@ -92,6 +93,8 @@ export default function AcceptInvitation() {
     },
     onSuccess: () => {
       toast({ title: "Invitation accepted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+
       navigate("/dashboard");
     },
     onError: (error: Error) => {
