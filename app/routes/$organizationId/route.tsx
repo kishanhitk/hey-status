@@ -349,11 +349,11 @@ export default function PublicStatusPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div className="bg-white border-b">
-        <header className=" flex items-center justify-between container">
-          <div className="py-4 flex items-center justify-between">
+        <header className="flex items-center justify-between container ">
+          <div className="py-4 flex items-center justify-between w-full">
             <div className="flex items-center">
               <svg
-                className="h-8 w-8 text-blue-500"
+                className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500"
                 fill="none"
                 height="24"
                 stroke="currentColor"
@@ -366,28 +366,28 @@ export default function PublicStatusPage() {
               >
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
               </svg>
-              <span className="ml-2 text-xl font-bold text-gray-900">
+              <span className="ml-2 text-lg sm:text-xl font-bold text-gray-900">
                 {organization.name} Status
               </span>
             </div>
+            <SubscribeDialog organizationId={organization.id} />
           </div>
-          <SubscribeDialog organizationId={organization.id} />
         </header>
       </div>
       <main className="flex-grow">
-        <div className="container py-8">
-          <div className="bg-white shadow rounded-lg p-6 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <div className="container px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Current Status
             </h2>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+              <div className="flex items-center mb-2 sm:mb-0">
                 {allOperational ? (
-                  <CheckCircle className="h-8 w-8 text-green-500" />
+                  <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
                 ) : (
-                  <AlertTriangle className="h-8 w-8 text-yellow-500" />
+                  <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500" />
                 )}
-                <span className="ml-2 text-xl font-medium text-gray-900">
+                <span className="ml-2 text-lg sm:text-xl font-medium text-gray-900">
                   {allOperational
                     ? "All systems operational"
                     : "Some systems are experiencing issues"}
@@ -398,18 +398,20 @@ export default function PublicStatusPage() {
               </div>
             </div>
           </div>
-          <div className="bg-white shadow rounded-lg p-6 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Services</h2>
+          <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+              Services
+            </h2>
             <div className="space-y-4">
               {services.map((service, index) => (
                 <div
                   key={service.id}
-                  className={`flex items-center justify-between ${
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between ${
                     index !== services.length - 1 ? "border-b pb-2" : ""
                   }`}
                 >
-                  <div className="flex items-center">
-                    <span className="text-lg text-gray-900">
+                  <div className="flex items-center mb-2 sm:mb-0">
+                    <span className="text-base sm:text-lg text-gray-900">
                       {service.name}
                     </span>
                     <TooltipProvider>
@@ -452,22 +454,22 @@ export default function PublicStatusPage() {
           </div>
           <StatusHeatmap services={services} />
           {scheduledMaintenances.length > 0 && (
-            <div className="bg-white shadow rounded-lg p-6 mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
                 Scheduled Maintenance
               </h2>
-              <div className="space-y-8">
+              <div className="space-y-6 sm:space-y-8">
                 {scheduledMaintenances.map((maintenance) => {
                   const status = getMaintenanceStatus(maintenance);
                   return (
                     <div key={maintenance.id} className="border-b pb-6">
                       <h3
-                        className={`text-xl font-semibold mb-2 ${MAINTENANCE_STATUS_COLORS[status]}`}
+                        className={`text-lg sm:text-xl font-semibold mb-2 ${MAINTENANCE_STATUS_COLORS[status]}`}
                       >
                         {maintenance.title}
                       </h3>
                       <div className="space-y-2 mb-4">
-                        <p className="text-gray-600">
+                        <p className="text-sm sm:text-base text-gray-600">
                           Status:{" "}
                           {
                             MAINTENANCE_STATUS_LABELS[
@@ -475,7 +477,7 @@ export default function PublicStatusPage() {
                             ]
                           }
                         </p>
-                        <p className="text-gray-600">
+                        <p className="text-sm sm:text-base text-gray-600">
                           Impact:{" "}
                           {
                             MAINTENANCE_IMPACT_LABELS[
@@ -483,11 +485,11 @@ export default function PublicStatusPage() {
                             ]
                           }
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs sm:text-sm text-gray-500">
                           Scheduled: {formatDateTime(maintenance.start_time)} -{" "}
                           {formatDateTime(maintenance.end_time)}
                         </p>
-                        <p className="text-gray-600">
+                        <p className="text-sm sm:text-base text-gray-600">
                           Affected Services:{" "}
                           {maintenance.services_scheduled_maintenances
                             .map((ssm) => ssm.services?.name)
@@ -497,10 +499,12 @@ export default function PublicStatusPage() {
                       <div className="space-y-4">
                         {maintenance.maintenance_updates.map((update) => (
                           <div key={update.id}>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-xs sm:text-sm text-gray-500">
                               {formatDateTime(update.created_at)}
                             </div>
-                            <p className="text-gray-700">{update.message}</p>
+                            <p className="text-sm sm:text-base text-gray-700">
+                              {update.message}
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -510,11 +514,11 @@ export default function PublicStatusPage() {
               </div>
             </div>
           )}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Incident History
             </h2>
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               {incidents.map((incident, index) => (
                 <div
                   key={incident.id}
@@ -523,7 +527,7 @@ export default function PublicStatusPage() {
                   }`}
                 >
                   <h3
-                    className={`text-xl font-semibold mb-2 ${
+                    className={`text-lg sm:text-xl font-semibold mb-2 ${
                       INCIDENT_STATUS_COLORS[
                         incident.incident_updates[0]?.status as IncidentStatus
                       ]
@@ -532,7 +536,7 @@ export default function PublicStatusPage() {
                     {incident.title}
                   </h3>
                   <div className="space-y-2 mb-4">
-                    <p className="text-gray-600">
+                    <p className="text-sm sm:text-base text-gray-600">
                       Impact:{" "}
                       {
                         INCIDENT_IMPACT_LABELS[
@@ -540,14 +544,14 @@ export default function PublicStatusPage() {
                         ]
                       }
                     </p>
-                    <p className="text-gray-600">
+                    <p className="text-sm sm:text-base text-gray-600">
                       Affected Services:{" "}
                       {incident.services_incidents
                         .map((si) => si.service?.name)
                         .join(", ")}
                     </p>
                   </div>
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     {incident.incident_updates.map((update) => (
                       <div key={update.id}>
                         <div className="flex items-center">
@@ -557,7 +561,7 @@ export default function PublicStatusPage() {
                             ],
                             { className: "h-5 w-5 mr-2" }
                           )}
-                          <span className="font-semibold">
+                          <span className="font-semibold text-sm sm:text-base">
                             {
                               INCIDENT_STATUS_LABELS[
                                 update.status as IncidentStatus
@@ -565,10 +569,10 @@ export default function PublicStatusPage() {
                             }
                           </span>
                         </div>
-                        <div className="text-sm text-gray-500 my-1">
+                        <div className="text-xs sm:text-sm text-gray-500 my-1">
                           {formatDateTime(update?.created_at ?? "")}
                         </div>
-                        <p className="text-gray-700 whitespace-pre-wrap">
+                        <p className="text-sm sm:text-base text-gray-700 whitespace-pre-wrap">
                           {update.message}
                         </p>
                       </div>
@@ -581,13 +585,13 @@ export default function PublicStatusPage() {
         </div>
       </main>
       <footer className="bg-white border-t">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <p className="text-gray-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between">
+          <p className="text-gray-500 text-sm mb-2 sm:mb-0">
             © 2024 {organization.name}. All rights reserved.
           </p>
           <div className="flex space-x-4">
             <a
-              className="text-gray-500 hover:text-gray-900 flex items-center"
+              className="text-gray-500 hover:text-gray-900 flex items-center text-sm"
               href="https://hey-status.pages.dev"
               target="_blank"
               rel="noopener noreferrer"
