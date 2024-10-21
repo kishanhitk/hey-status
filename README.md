@@ -18,6 +18,12 @@ HeyStatus is an open-source status page system designed to help teams monitor th
     - [Multi-tenant Architecture](#multi-tenant-architecture)
     - [Team Management and Permissions](#team-management-and-permissions)
   - [Local Development Setup](#local-development-setup)
+  - [Continuous Integration and Deployment (CI/CD)](#continuous-integration-and-deployment-cicd)
+    - [Deployment Process](#deployment-process)
+    - [Environment Variables](#environment-variables)
+  - [Edge Functions](#edge-functions)
+    - [1. Send Mail to Subscribers](#1-send-mail-to-subscribers)
+    - [2. Accept Invitation](#2-accept-invitation)
   - [License](#license)
 
 ## Features
@@ -174,6 +180,60 @@ Roles are enforced through RLS policies in Supabase, ensuring data security at t
 
 
 Now you have HeyStatus running locally on your machine!
+
+
+## Continuous Integration and Deployment (CI/CD)
+
+HeyStatus uses GitHub Actions for continuous integration and deployment. The workflow is defined in `.github/workflows/production.yml`.
+
+### Deployment Process
+
+1. **Trigger**: The workflow is triggered on pushes to the `main` branch or manually via workflow dispatch.
+
+2. **Environment**: The job runs on the latest Ubuntu runner.
+
+3. **Steps**:
+   - Checkout the repository
+   - Set up Supabase CLI
+   - Link the Supabase project
+   - Push database changes using `supabase db push`
+   - Deploy Edge Functions
+
+### Environment Variables
+
+The workflow uses the following secrets:
+- `SUPABASE_ACCESS_TOKEN`
+- `PRODUCTION_DB_PASSWORD`
+- `PRODUCTION_PROJECT_ID`
+
+These secrets are securely stored in GitHub and used during the deployment process.
+
+## Edge Functions
+
+HeyStatus utilizes Supabase Edge Functions for certain operations that require server-side logic. Two key edge functions are:
+
+### 1. Send Mail to Subscribers
+
+This function is triggered when a new incident update is created. It fetches the relevant incident and organization details, then sends an email notification to all subscribers of that organization using Resend.
+
+### 2. Accept Invitation
+
+The invitation acceptance process is handled by an edge function to ensure security and proper data manipulation. Here's how it works:
+
+1. When a user clicks on an invitation link, the frontend calls this edge function.
+2. The function verifies the invitation's validity (correct email, not expired).
+3. If valid, it updates the user's organization and role in the database.
+4. The invitation is then deleted to prevent reuse.
+
+This approach ensures that sensitive operations like changing a user's organization are performed securely on the server-side.
+
+To deploy edge functions locally for testing:
+```
+supabase functions serve
+```
+
+For production deployment, edge functions are automatically deployed as part of the GitHub Actions workflow.
+
 ## License
 
 HeyStatus is open-source software licensed under the MIT license.
