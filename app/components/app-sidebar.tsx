@@ -9,15 +9,10 @@ import {
   Server,
   Settings,
   Users,
+  Moon,
+  Sun,
 } from "lucide-react";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -35,9 +30,11 @@ import { NavUser } from "./nav-user";
 import { Link } from "@remix-run/react";
 import { ROLES } from "~/lib/constants";
 import RoleBasedAccess from "./role-based-access";
+import { useTheme } from "~/components/theme-provider";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser();
+  const { theme, setTheme } = useTheme();
 
   const navGroups = [
     {
@@ -66,6 +63,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Settings",
           url: "/dashboard/settings",
           icon: Settings,
+        },
+      ],
+    },
+    {
+      label: "Preferences",
+      allowedRoles: [ROLES.ADMIN, ROLES.EDITOR, ROLES.VIEWER],
+      items: [
+        {
+          title: "Toggle Theme",
+          icon: theme === "dark" ? Sun : Moon,
+          onClick: () => setTheme(theme === "dark" ? "light" : "dark"),
         },
       ],
     },
@@ -103,11 +111,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenu>
                 {group.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <Link to={item.url} prefetch="intent">
-                        {item.icon && <item.icon className="mr-2 h-4 w-4" />}
-                        <span>{item.title}</span>
-                      </Link>
+                    <SidebarMenuButton
+                      asChild={!item.onClick}
+                      onClick={item.onClick}
+                    >
+                      {item.onClick ? (
+                        <button className="flex w-full items-center">
+                          {item.icon && <item.icon className="mr-2 h-4 w-4" />}
+                          <span>{item.title}</span>
+                        </button>
+                      ) : (
+                        <Link to={item.url!} prefetch="intent">
+                          {item.icon && <item.icon className="mr-2 h-4 w-4" />}
+                          <span>{item.title}</span>
+                        </Link>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -115,7 +133,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroup>
           </RoleBasedAccess>
         ))}
-
         <SidebarGroup>
           <SidebarGroupLabel>Public</SidebarGroupLabel>
           <SidebarMenu>

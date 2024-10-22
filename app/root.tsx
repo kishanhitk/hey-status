@@ -10,6 +10,7 @@ import {
   useLoaderData,
   useNavigation,
   useRevalidator,
+  useLocation,
 } from "@remix-run/react";
 
 import styles from "./tailwind.css?url";
@@ -20,6 +21,7 @@ import { useEffect, useMemo } from "react";
 import { useSupabase } from "./hooks/useSupabase";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "~/components/ui/toaster";
+import { ThemeProvider } from "./components/theme-provider";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const env = context.cloudflare.env;
@@ -56,14 +58,14 @@ export const links: LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="min-h-screen bg-background font-sans antialiased">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -72,12 +74,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 1, // 1 minute
+    },
+  },
+});
 
 export default function App() {
   const { session } = useLoaderData<typeof loader>();
   const supabase = useSupabase();
   const revalidator = useRevalidator();
+  const location = useLocation();
 
   const serverAccessToken = session?.access_token;
   useEffect(() => {
@@ -128,8 +137,14 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster />
-      <Outlet />
+      {location.pathname === "/" ? (
+        <Outlet />
+      ) : (
+        <ThemeProvider>
+          <Toaster />
+          <Outlet />
+        </ThemeProvider>
+      )}
     </QueryClientProvider>
   );
 }

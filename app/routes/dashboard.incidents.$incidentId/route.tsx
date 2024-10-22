@@ -425,9 +425,9 @@ export default function IncidentDetails() {
                             type="button"
                             variant="outline"
                             onClick={() => field.onChange(impact.value)}
-                            className={`border-gray-300 text-gray-500 rounded-2xl px-7 ${
+                            className={`border-gray-300 text-gray-500 dark:border-gray-600 dark:text-gray-400 rounded-2xl px-7 ${
                               field.value === impact.value
-                                ? "border-black text-black"
+                                ? "border-black text-black dark:border-white dark:text-white"
                                 : ""
                             }`}
                           >
@@ -503,14 +503,19 @@ export default function IncidentDetails() {
                 new Date(a.created_at).getTime()
             )
             .map((update) => (
-              <div key={update.id} className="mb-4 p-4 bg-gray-100 rounded-lg">
+              <div
+                key={update.id}
+                className="mb-4 p-4 bg-gray-100 dark:bg-white/5 rounded-lg"
+              >
                 <h3 className="font-semibold">
                   {INCIDENT_STATUS_LABELS[update.status as IncidentStatus]}
                 </h3>
-                <p className="text-sm text-gray-500 mb-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                   {formatDistanceToNow(new Date(update.created_at))} ago
                 </p>
-                <p>{update.message}</p>
+                <p className="text-gray-700 dark:text-gray-300">
+                  {update.message}
+                </p>
               </div>
             ))}
         </div>
