@@ -117,3 +117,64 @@ body {
 .debug {
   @apply border border-red-500;
 }
+
+@layer utilities {
+  .js-loaded .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .js-loaded .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .animation-delay-600 {
+    animation-delay: 600ms;
+  }
+
+  .animation-delay-800 {
+    animation-delay: 800ms;
+  }
+
+  .animation-delay-1000 {
+    animation-delay: 1000ms;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Add these styles to hide elements before JS loads */
+.animate-fade-in,
+.animate-fade-in-up {
+  opacity: 0;
+}
+
+.js-loaded .animate-fade-in,
+.js-loaded .animate-fade-in-up {
+  opacity: 1;
+}

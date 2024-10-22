@@ -33,10 +33,10 @@ export default function Component() {
     <div className="min-h-screen">
       <LandingHeader />
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-28 xl:py-28 relative">
+        <section className="w-full py-12 md:py-24 lg:py-28 xl:py-28 relative animate-fade-in-up">
           <div className="container relative z-10">
             <div className="flex flex-col items-center space-y-8 text-center">
-              <div className="space-y-5">
+              <div className="space-y-5 animate-fade-in-up animation-delay-200">
                 <a
                   href="https://github.com/kishanhitk/hey-status"
                   target="_blank"
@@ -54,7 +54,7 @@ export default function Component() {
                   pages. Monitor your API and website globally.
                 </p>
               </div>
-              <div className="w-full max-w-sm space-y-2">
+              <div className="w-full max-w-sm space-y-2 animate-fade-in-up animation-delay-400">
                 <div className="flex space-x-2">
                   <Link to="/login" className="w-full">
                     <RainbowButton className="w-full rounded-lg py-5 text-md">
@@ -67,10 +67,9 @@ export default function Component() {
             <img
               src="/images/status-page-example.png"
               alt="HeyStatus Example Status Page"
-              className="w-full max-w-[1000px] rounded-xl shadow-xl mx-auto mt-12 border-2 border-gray-100 hover:scale-105 transition-all duration-300"
+              className="w-full max-w-[1000px] rounded-xl shadow-xl mx-auto mt-12 border-2 border-gray-100 hover:scale-105 transition-all duration-300 animate-fade-in-up animation-delay-600"
             />
           </div>
-
           <DotPattern
             width={20}
             height={20}

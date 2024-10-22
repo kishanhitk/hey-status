@@ -16,3 +16,8 @@ startTransition(() => {
     </StrictMode>
   );
 });
+
+// This is to prevent animation flickering on the first render
+if (typeof document !== "undefined") {
+  document.body.classList.add("js-loaded");
+}
