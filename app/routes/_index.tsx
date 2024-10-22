@@ -23,6 +23,7 @@ import {
   CardFooter,
 } from "~/components/ui/card";
 import { LandingHeader } from "~/components/landing-header";
+import { ModeToggle } from "~/components/mode-toggle";
 
 export const meta: MetaFunction = () => {
   return metaGenerator({});
@@ -30,7 +31,7 @@ export const meta: MetaFunction = () => {
 
 export default function Component() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white dark:bg-gray-950">
       <LandingHeader />
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-28 xl:py-28 relative animate-fade-in-up">
@@ -46,10 +47,10 @@ export default function Component() {
                     Proudly Open Source
                   </ShinyButton>
                 </a>
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none">
+                <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none dark:text-white">
                   Monitor your services with ease
                 </h1>
-                <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl">
+                <p className="mx-auto max-w-[700px] text-gray-500 dark:text-gray-400 md:text-xl">
                   Keep your users informed with beautiful, customizable status
                   pages. Monitor your API and website globally.
                 </p>
@@ -67,7 +68,7 @@ export default function Component() {
             <img
               src="/images/status-page-example.png"
               alt="HeyStatus Example Status Page"
-              className="w-full max-w-[1000px] rounded-xl shadow-xl mx-auto mt-12 border-2 border-gray-100 hover:scale-105 transition-all duration-300 animate-fade-in-up animation-delay-600"
+              className="w-full max-w-[1000px] rounded-xl shadow-xl mx-auto mt-12 border-2 border-gray-100 dark:border-gray-800 hover:scale-105 transition-all duration-300 animate-fade-in-up animation-delay-600"
             />
           </div>
           <DotPattern
@@ -81,12 +82,15 @@ export default function Component() {
             )}
           />
         </section>
-        <section id="features" className="w-full py-12 md:py-18">
+        <section
+          id="features"
+          className="w-full py-12 md:py-18 bg-gray-50 dark:bg-black"
+        >
           <div className="container px-4 md:px-6">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-center">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-center dark:text-white">
               Features
             </h2>
-            <p className="max-w-[600px] text-gray-500 md:text-xl text-center mx-auto mt-2 mb-8">
+            <p className="max-w-[600px] text-gray-500 dark:text-gray-400 md:text-xl text-center mx-auto mt-2 mb-8">
               HeyStatus is a powerful status page tool that allows you to
               monitor your services and keep your users informed.
             </p>
@@ -240,15 +244,15 @@ export function PricingSection() {
   return (
     <section
       id="pricing"
-      className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-t from-gray-50 to-white"
+      className="w-full py-12 md:py-24 lg:py-32 bg-white dark:bg-black"
     >
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl dark:text-white">
               Simple, Transparent Pricing
             </h2>
-            <p className="max-w-[600px] text-gray-500 md:text-xl">
+            <p className="max-w-[600px] text-gray-500 md:text-xl dark:text-gray-400">
               Start monitoring your services with our flexible plans. Upgrade as
               you grow.
             </p>
@@ -256,21 +260,28 @@ export function PricingSection() {
         </div>
         <div className="grid grid-cols-1 gap-6 mt-8 md:grid-cols-2 md:gap-8">
           {pricingPlans.map((plan) => (
-            <Card key={plan.name} className="flex flex-col justify-between">
+            <Card
+              key={plan.name}
+              className="flex flex-col justify-between dark:bg-white/5 dark:border-white/10"
+            >
               <CardHeader>
-                <CardTitle>{plan.name}</CardTitle>
-                <CardDescription>{plan.description}</CardDescription>
+                <CardTitle className="dark:text-white">{plan.name}</CardTitle>
+                <CardDescription className="dark:text-gray-400">
+                  {plan.description}
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold mb-4">
+                <div className="text-4xl font-bold mb-4 dark:text-white">
                   {plan.price}
-                  <span className="text-xl font-normal">/month</span>
+                  <span className="text-xl font-normal dark:text-gray-400">
+                    /month
+                  </span>
                 </div>
                 <ul className="space-y-2">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-center">
                       <Check className="mr-2 h-4 w-4 text-green-500" />
-                      {feature}
+                      <span className="dark:text-gray-300">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -294,17 +305,24 @@ export function PricingSection() {
 
 export function Footer() {
   return (
-    <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center container">
-      <p className="text-xs text-gray-500">
+    <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center container bg-white dark:bg-gray-950">
+      <p className="text-xs text-gray-500 dark:text-gray-400">
         © 2024 HeyStatus Inc. All rights reserved.
       </p>
-      <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-        <Link className="text-xs hover:underline underline-offset-4" to="#">
+      <nav className="sm:ml-auto flex gap-4 sm:gap-6 items-center">
+        <Link
+          className="text-xs hover:underline underline-offset-4 dark:text-gray-300"
+          to="#"
+        >
           Terms of Service
         </Link>
-        <Link className="text-xs hover:underline underline-offset-4" to="#">
+        <Link
+          className="text-xs hover:underline underline-offset-4 dark:text-gray-300"
+          to="#"
+        >
           Privacy
         </Link>
+        <ModeToggle />
       </nav>
     </footer>
   );

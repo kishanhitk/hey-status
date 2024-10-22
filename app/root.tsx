@@ -137,14 +137,10 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {location.pathname === "/" ? (
+      <ThemeProvider>
+        <Toaster />
         <Outlet />
-      ) : (
-        <ThemeProvider>
-          <Toaster />
-          <Outlet />
-        </ThemeProvider>
-      )}
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
