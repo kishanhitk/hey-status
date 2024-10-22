@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import { useParams } from "@remix-run/react";
 import { useQuery } from "@tanstack/react-query";
 import { useSupabase } from "~/hooks/useSupabase";
@@ -49,43 +50,45 @@ export const StatusHeatmap = ({
     },
   });
 
-  const calculateDailyDowntime = () => {
-    const dailyDowntime: Record<string, Record<string, number>> = {};
-    const now = new Date();
+  const dailyDowntime = useMemo(() => {
+    const calculateDailyDowntime = () => {
+      const dailyDowntime: Record<string, Record<string, number>> = {};
+      const now = new Date();
 
-    services.forEach((service) => {
-      dailyDowntime[service.id] = {};
-      for (let i = 29; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        const dateString = date.toISOString().split("T")[0];
-        dailyDowntime[service.id][dateString] = 0; // Initialize with 0 minutes of downtime
-      }
-    });
-
-    if (statusData) {
-      statusData.forEach((log, index) => {
-        const startDate = new Date(log.created_at);
-        const dateString = startDate.toISOString().split("T")[0];
-
-        if (log.status !== "operational") {
-          const endDate =
-            index < statusData.length - 1
-              ? new Date(statusData[index + 1].created_at)
-              : new Date(); // Use current time for the last log
-
-          const downtimeMinutes = Math.floor(
-            (endDate.getTime() - startDate.getTime()) / (1000 * 60)
-          );
-          dailyDowntime[log.service_id][dateString] += downtimeMinutes;
+      services.forEach((service) => {
+        dailyDowntime[service.id] = {};
+        for (let i = 29; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          const dateString = date.toISOString().split("T")[0];
+          dailyDowntime[service.id][dateString] = 0; // Initialize with 0 minutes of downtime
         }
       });
-    }
 
-    return dailyDowntime;
-  };
+      if (statusData) {
+        statusData.forEach((log, index) => {
+          const startDate = new Date(log.created_at);
+          const dateString = startDate.toISOString().split("T")[0];
 
-  const dailyDowntime = calculateDailyDowntime();
+          if (log.status !== "operational") {
+            const endDate =
+              index < statusData.length - 1
+                ? new Date(statusData[index + 1].created_at)
+                : new Date(); // Use current time for the last log
+
+            const downtimeMinutes = Math.floor(
+              (endDate.getTime() - startDate.getTime()) / (1000 * 60)
+            );
+            dailyDowntime[log.service_id][dateString] += downtimeMinutes;
+          }
+        });
+      }
+
+      return dailyDowntime;
+    };
+
+    return calculateDailyDowntime();
+  }, [services, statusData]);
 
   const getDowntimeColor = (downtimeMinutes: number) => {
     if (downtimeMinutes === 0) return "bg-green-500";
