@@ -492,9 +492,9 @@ export default function MaintenanceDetails() {
                               type="button"
                               variant="outline"
                               onClick={() => field.onChange(value)}
-                              className={`border-gray-300 text-gray-500 ${
+                              className={`border-gray-300 text-gray-500 dark:border-gray-600 dark:text-gray-400 rounded-md px-4 ${
                                 field.value === value
-                                  ? "border-black text-black"
+                                  ? "border-black text-black dark:border-white dark:text-white"
                                   : ""
                               }`}
                             >
