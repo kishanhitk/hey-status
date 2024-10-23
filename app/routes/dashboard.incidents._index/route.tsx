@@ -166,7 +166,7 @@ export default function Incidents() {
         </div>
       ) : (
         <div className="text-center py-12 border border-dashed rounded-lg mx-auto w-full">
-          <h3 className="mt-2 text-lg font-semibold text-gray-900">
+          <h3 className="mt-2 text-lg font-semibold text-gray-900 dark:text-white">
             No incidents yet
           </h3>
           <div className="mt-3">
